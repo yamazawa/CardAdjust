@@ -1,0 +1,45 @@
+<Window x:Class="CardAdjust.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:CardAdjust"
+        xmlns:styles="clr-namespace:CardAdjust.Styles"
+        xmlns:resx="clr-namespace:CardAdjust.Resources"
+        mc:Ignorable="d"
+        Title="{x:Static resx:Strings.WindowTitle}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        MinHeight="{x:Static styles:LayoutConstants.WindowMinHeight}"
+        MinWidth="{x:Static styles:LayoutConstants.WindowMinWidth}">
+    <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- カード一覧。フォルダ内の画像を選択してプレビュー対象を切り替える。 -->
+        <DockPanel Grid.Column="0" Width="{x:Static styles:LayoutConstants.CardListWidth}"
+                   Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+            <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_CardList}"
+                       FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <ListBox ItemsSource="{Binding CardList}" SelectedItem="{Binding SelectedCard}"
+                     DisplayMemberPath="DisplayName" />
+        </DockPanel>
+
+        <!-- 元画像。選択中カードの生画像をそのまま表示する。 -->
+        <DockPanel Grid.Column="1" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+            <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_SourceImage}"
+                       FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <Image Source="{Binding SourceImage}" Stretch="Uniform" />
+        </DockPanel>
+
+        <!-- プレビュー。要素合成(①外枠～④説明文)が実装されるまでは元画像と同じ内容を表示する。 -->
+        <DockPanel Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+            <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_Preview}"
+                       FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <Image Source="{Binding SourceImage}" Stretch="Uniform" />
+        </DockPanel>
+    </Grid>
+</Window>
