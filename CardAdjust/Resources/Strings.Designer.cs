@@ -205,6 +205,15 @@ namespace CardAdjust.Resources {
         }
 
         /// <summary>
+        ///   共通設定 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_CommonSetting {
+            get {
+                return ResourceManager.GetString("Label_CommonSetting", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   クリア に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Button_Clear {

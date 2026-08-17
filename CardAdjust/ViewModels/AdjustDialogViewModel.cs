@@ -6,11 +6,19 @@ namespace CardAdjust.ViewModels;
 /// <summary>
 /// 個別調整ダイアログのViewModel
 ///
-/// OK/クリア/キャンセルの結果はResultで表す(nullはキャンセル)。
+/// 各項目はLostFocus(TextBox.Textの既定のUpdateSourceTrigger)のたびにLiveChangedを発火し、
+/// 呼び出し側が即座にプレビューへ反映する。
+/// OKは何もしない(既に反映済み)。キャンセル時は呼び出し側が元の値に戻す。
 /// </summary>
 public partial class AdjustDialogViewModel : ObservableObject
 {
+    public bool IsCommonSetting { get; }
+
+    public string TargetLabel { get; }
+
     public bool ShowLineSpacing { get; }
+
+    public bool ShowClearButton => !IsCommonSetting;
 
     [ObservableProperty]
     private string _fontFamilyName;
@@ -24,44 +32,48 @@ public partial class AdjustDialogViewModel : ObservableObject
     [ObservableProperty]
     private double _lineSpacing;
 
-    public AdjustDialogResult? Result { get; private set; }
+    public bool WasCanceled { get; private set; }
 
     public event Action? RequestClose;
 
-    public AdjustDialogViewModel(string fontFamilyName, double fontSize, double letterSpacing, double lineSpacing, bool showLineSpacing)
+    public event Action? LiveChanged;
+
+    public event Action? ClearRequested;
+
+    public AdjustDialogViewModel(string fontFamilyName, double fontSize, double letterSpacing, double lineSpacing,
+        bool showLineSpacing, bool isCommonSetting, string targetLabel)
     {
         _fontFamilyName = fontFamilyName;
         _fontSize = fontSize;
         _letterSpacing = letterSpacing;
         _lineSpacing = lineSpacing;
         ShowLineSpacing = showLineSpacing;
+        IsCommonSetting = isCommonSetting;
+        TargetLabel = targetLabel;
     }
 
+    partial void OnFontFamilyNameChanged(string value) => LiveChanged?.Invoke();
+
+    partial void OnFontSizeChanged(double value) => LiveChanged?.Invoke();
+
+    partial void OnLetterSpacingChanged(double value) => LiveChanged?.Invoke();
+
+    partial void OnLineSpacingChanged(double value) => LiveChanged?.Invoke();
+
     [RelayCommand]
-    private void Ok()
-    {
-        Result = new AdjustDialogResult(IsCleared: false, FontFamilyName, FontSize, LetterSpacing, LineSpacing);
-        RequestClose?.Invoke();
-    }
+    private void Ok() => RequestClose?.Invoke();
 
     [RelayCommand]
     private void Clear()
     {
-        Result = new AdjustDialogResult(IsCleared: true, FontFamilyName, FontSize, LetterSpacing, LineSpacing);
+        ClearRequested?.Invoke();
         RequestClose?.Invoke();
     }
 
     [RelayCommand]
     private void Cancel()
     {
-        Result = null;
+        WasCanceled = true;
         RequestClose?.Invoke();
     }
 }
-
-/// <summary>
-/// 個別調整ダイアログの結果
-///
-/// IsCleared時は、呼び出し側が対象区間の上書きを削除して統一設定に戻す。
-/// </summary>
-public sealed record AdjustDialogResult(bool IsCleared, string FontFamilyName, double FontSize, double LetterSpacing, double LineSpacing);

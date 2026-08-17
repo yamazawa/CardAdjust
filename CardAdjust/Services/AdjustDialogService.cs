@@ -5,15 +5,15 @@ using CardAdjust.Views;
 namespace CardAdjust.Services;
 
 /// <summary>
-/// 個別調整ダイアログを表示するサービス
+/// 個別調整ダイアログをモーダル表示するサービス
+///
+/// 値の反映・取消は呼び出し側がAdjustDialogViewModelのイベント経由で行う。
 /// </summary>
 public class AdjustDialogService
 {
-    public AdjustDialogResult? Show(string fontFamilyName, double fontSize, double letterSpacing, double lineSpacing, bool showLineSpacing)
+    public void ShowModal(AdjustDialogViewModel viewModel)
     {
-        var viewModel = new AdjustDialogViewModel(fontFamilyName, fontSize, letterSpacing, lineSpacing, showLineSpacing);
         var dialog = new AdjustDialog(viewModel) { Owner = Application.Current.MainWindow };
         dialog.ShowDialog();
-        return viewModel.Result;
     }
 }

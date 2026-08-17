@@ -3,13 +3,29 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:resx="clr-namespace:CardAdjust.Resources"
         xmlns:styles="clr-namespace:CardAdjust.Styles"
+        xmlns:behaviors="clr-namespace:CardAdjust.Behaviors"
         Title="{x:Static resx:Strings.AdjustDialog_Title}"
         Width="320" SizeToContent="Height"
         WindowStartupLocation="CenterOwner" ResizeMode="NoResize">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
-    <StackPanel Margin="{x:Static styles:LayoutConstants.RootMargin}">
+    <StackPanel Margin="{x:Static styles:LayoutConstants.RootMargin}"
+                Background="Transparent"
+                behaviors:ClearFocusOnClickBehavior.IsEnabled="True">
+        <!-- 個別設定の場合は反映対象の文言列、共通設定の場合は「共通設定」と青字で表示する。 -->
+        <TextBlock Text="{Binding TargetLabel}" FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsCommonSetting}" Value="True">
+                            <Setter Property="Foreground" Value="Blue" />
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+
         <TextBlock Text="{x:Static resx:Strings.Label_FontFamily}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
         <TextBox Text="{Binding FontFamilyName}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
 
@@ -26,6 +42,7 @@
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
             <Button Content="{x:Static resx:Strings.Button_Clear}" Command="{Binding ClearCommand}"
+                    Visibility="{Binding ShowClearButton, Converter={StaticResource BooleanToVisibilityConverter}}"
                     Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
             <Button Content="{x:Static resx:Strings.Button_Cancel}" Command="{Binding CancelCommand}" IsCancel="True"
                     Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />

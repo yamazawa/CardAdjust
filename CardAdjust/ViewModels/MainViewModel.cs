@@ -3,6 +3,7 @@ using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CardAdjust.Models;
+using CardAdjust.Resources;
 using CardAdjust.Services;
 
 namespace CardAdjust.ViewModels;
@@ -22,22 +23,9 @@ public partial class MainViewModel : ObservableObject
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
 
-    // ②タイトル・④説明文の統一レイアウト設定。互いに別に保持する。
-    // 編集用のUIはまだ無いため、起動時に読み込んだ値をそのまま使う。
-    private readonly string _titleFontFamilyName;
-    private readonly double _titleFontSize;
-    private readonly double _titleLetterSpacing;
-    private readonly string _descriptionFontFamilyName;
-    private readonly double _descriptionFontSize;
-    private readonly double _descriptionLetterSpacing;
-    private readonly double _descriptionLineSpacing;
-
-    // 個別調整ダイアログで設定した、文字区間ごとのフォント上書き。カード切替時にクリアする。
-    private readonly List<CharacterStyleOverride> _titleOverrides = [];
-    private readonly List<CharacterStyleOverride> _descriptionOverrides = [];
-
-    // ④説明文の行間隔は文字区間ではなくテキスト全体への上書きのため、単独で持つ。
-    private double? _descriptionLineSpacingOverride;
+    // ②タイトル・④説明文の統一レイアウト設定＋文字区間ごとの個別上書き。互いに別に保持する。
+    private readonly TextElementState _titleState;
+    private readonly TextElementState _descriptionState;
 
     [ObservableProperty]
     private IReadOnlyList<CardImage> _cardList;
@@ -98,13 +86,19 @@ public partial class MainViewModel : ObservableObject
         _ocrService = ocrService;
         _adjustDialogService = adjustDialogService;
 
-        _titleFontFamilyName = settings.TitleFontFamily;
-        _titleFontSize = settings.TitleFontSize;
-        _titleLetterSpacing = settings.TitleLetterSpacing;
-        _descriptionFontFamilyName = settings.DescriptionFontFamily;
-        _descriptionFontSize = settings.DescriptionFontSize;
-        _descriptionLetterSpacing = settings.DescriptionLetterSpacing;
-        _descriptionLineSpacing = settings.DescriptionLineSpacing;
+        _titleState = new TextElementState
+        {
+            FontFamilyName = settings.TitleFontFamily,
+            FontSize = settings.TitleFontSize,
+            LetterSpacing = settings.TitleLetterSpacing,
+        };
+        _descriptionState = new TextElementState
+        {
+            FontFamilyName = settings.DescriptionFontFamily,
+            FontSize = settings.DescriptionFontSize,
+            LetterSpacing = settings.DescriptionLetterSpacing,
+            LineSpacing = settings.DescriptionLineSpacing,
+        };
 
         // 初期表示時点ではまだ設定変更ではないため、_settingsDirtyを立てないよう
         // プロパティではなくフィールドへ直接代入する。
@@ -139,31 +133,12 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 選択中のタイトル文字列に対する個別調整ダイアログを開く
+    /// タイトルの個別調整ダイアログを開く
+    ///
+    /// 範囲選択が無い場合は、②タイトルの共通設定を編集する。
     /// </summary>
     [RelayCommand]
-    private void AdjustTitle()
-    {
-        if (TitleSelectionLength <= 0)
-            return;
-
-        var existing = _titleOverrides.FirstOrDefault(o => o.Start == TitleSelectionStart && o.Length == TitleSelectionLength);
-        var result = _adjustDialogService.Show(
-            existing?.FontFamilyName ?? _titleFontFamilyName,
-            existing?.FontSize ?? _titleFontSize,
-            existing?.LetterSpacing ?? _titleLetterSpacing,
-            lineSpacing: 0,
-            showLineSpacing: false);
-
-        if (result is null)
-            return;
-
-        _titleOverrides.RemoveAll(o => RangesOverlap(o, TitleSelectionStart, TitleSelectionLength));
-        if (!result.IsCleared)
-            _titleOverrides.Add(new CharacterStyleOverride(TitleSelectionStart, TitleSelectionLength, result.FontFamilyName, result.FontSize, result.LetterSpacing));
-
-        RecomposePreview();
-    }
+    private void AdjustTitle() => OpenAdjustDialog(TitleText, TitleSelectionStart, TitleSelectionLength, _titleState, showLineSpacing: false);
 
     /// <summary>
     /// イラスト領域を矩形で切り抜き、表示矩形に貼り付ける
@@ -196,34 +171,79 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
-    /// 選択中の説明文文字列に対する個別調整ダイアログを開く(行間隔も対象に含める)
+    /// 説明文の個別調整ダイアログを開く(行間隔も対象に含める)
+    ///
+    /// 範囲選択が無い場合は、④説明文の共通設定を編集する。
     /// </summary>
     [RelayCommand]
-    private void AdjustDescription()
+    private void AdjustDescription() =>
+        OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+
+    // 範囲選択が無い場合は共通設定(IsCommonSetting)、ある場合はその区間の個別上書きを編集する。
+    // 各項目の変更はLostFocusのたびに即座にプレビューへ反映し(LiveChanged)、
+    // キャンセル時はダイアログを開いた時点の状態に戻す。
+    private void OpenAdjustDialog(string text, int selectionStart, int selectionLength, TextElementState state, bool showLineSpacing)
     {
-        if (DescriptionSelectionLength <= 0)
-            return;
+        var isCommon = selectionLength <= 0;
+        var start = isCommon ? 0 : selectionStart;
+        var length = isCommon ? 0 : selectionLength;
+        var targetLabel = isCommon ? Strings.Label_CommonSetting : text.Substring(start, length);
+        var existing = isCommon ? null : state.Overrides.FirstOrDefault(o => o.Start == start && o.Length == length);
 
-        var existing = _descriptionOverrides.FirstOrDefault(o => o.Start == DescriptionSelectionStart && o.Length == DescriptionSelectionLength);
-        var result = _adjustDialogService.Show(
-            existing?.FontFamilyName ?? _descriptionFontFamilyName,
-            existing?.FontSize ?? _descriptionFontSize,
-            existing?.LetterSpacing ?? _descriptionLetterSpacing,
-            _descriptionLineSpacingOverride ?? _descriptionLineSpacing,
-            showLineSpacing: true);
+        var viewModel = new AdjustDialogViewModel(
+            existing?.FontFamilyName ?? state.FontFamilyName,
+            existing?.FontSize ?? state.FontSize,
+            existing?.LetterSpacing ?? state.LetterSpacing,
+            state.LineSpacing,
+            showLineSpacing, isCommon, targetLabel);
 
-        if (result is null)
-            return;
+        var snapshotFontFamilyName = state.FontFamilyName;
+        var snapshotFontSize = state.FontSize;
+        var snapshotLetterSpacing = state.LetterSpacing;
+        var snapshotLineSpacing = state.LineSpacing;
+        var snapshotOverrides = state.Overrides.ToList();
 
-        _descriptionOverrides.RemoveAll(o => RangesOverlap(o, DescriptionSelectionStart, DescriptionSelectionLength));
-        _descriptionLineSpacingOverride = result.IsCleared ? null : result.LineSpacing;
-        if (!result.IsCleared)
-        {
-            _descriptionOverrides.Add(new CharacterStyleOverride(
-                DescriptionSelectionStart, DescriptionSelectionLength, result.FontFamilyName, result.FontSize, result.LetterSpacing));
-        }
+        viewModel.LiveChanged += () => ApplyAdjustLive(state, isCommon, start, length, viewModel);
+        viewModel.ClearRequested += () => state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
+
+        _adjustDialogService.ShowModal(viewModel);
+
+        if (viewModel.WasCanceled)
+            RevertAdjust(state, snapshotFontFamilyName, snapshotFontSize, snapshotLetterSpacing, snapshotLineSpacing, snapshotOverrides);
 
         RecomposePreview();
+    }
+
+    // 行間隔は文字区間の概念に馴染まないため、共通/個別どちらのモードでも常にstate全体へ反映する。
+    private void ApplyAdjustLive(TextElementState state, bool isCommon, int start, int length, AdjustDialogViewModel viewModel)
+    {
+        state.LineSpacing = viewModel.LineSpacing;
+
+        if (isCommon)
+        {
+            state.FontFamilyName = viewModel.FontFamilyName;
+            state.FontSize = viewModel.FontSize;
+            state.LetterSpacing = viewModel.LetterSpacing;
+        }
+        else
+        {
+            state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
+            state.Overrides.Add(new CharacterStyleOverride(start, length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing));
+        }
+
+        MarkSettingsDirty();
+        RecomposePreview();
+    }
+
+    private static void RevertAdjust(TextElementState state, string fontFamilyName, double fontSize, double letterSpacing,
+        double lineSpacing, List<CharacterStyleOverride> overrides)
+    {
+        state.FontFamilyName = fontFamilyName;
+        state.FontSize = fontSize;
+        state.LetterSpacing = letterSpacing;
+        state.LineSpacing = lineSpacing;
+        state.Overrides.Clear();
+        state.Overrides.AddRange(overrides);
     }
 
     private static bool RangesOverlap(CharacterStyleOverride o, int start, int length) =>
@@ -235,9 +255,11 @@ public partial class MainViewModel : ObservableObject
         TitleText = string.Empty;
         IllustrationImage = null;
         DescriptionText = string.Empty;
-        _titleOverrides.Clear();
-        _descriptionOverrides.Clear();
-        _descriptionLineSpacingOverride = null;
+
+        // 文字区間ごとの個別上書きはカードごとの編集セッションに属するためクリアする。
+        // 共通設定(フォント・サイズ・間隔)はアプリ全体の設定なので維持する。
+        _titleState.Overrides.Clear();
+        _descriptionState.Overrides.Clear();
     }
 
     partial void OnTitleTextChanged(string value) => RecomposePreview();
@@ -266,7 +288,7 @@ public partial class MainViewModel : ObservableObject
     private void MarkSettingsDirty() => _settingsDirty = true;
 
     /// <summary>
-    /// ウィンドウサイズに変更があれば設定を保存する
+    /// ウィンドウサイズ・フォント設定に変更があれば設定を保存する
     /// </summary>
     public void SaveSettingsIfDirty()
     {
@@ -274,15 +296,17 @@ public partial class MainViewModel : ObservableObject
             return;
 
         _settingsDirty = false;
-        _settingsService.Save(new AppSettings(WindowWidth, WindowHeight, _titleFontFamilyName, _titleFontSize, _titleLetterSpacing,
-            _descriptionFontFamilyName, _descriptionFontSize, _descriptionLetterSpacing, _descriptionLineSpacing));
+        _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
+            _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing,
+            _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing));
     }
 
     private void RecomposePreview()
     {
-        var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleFontFamilyName), _titleFontSize, _titleLetterSpacing, _titleOverrides);
-        var descriptionStyles = CharacterStyleBuilder.Build(DescriptionText, new FontFamily(_descriptionFontFamilyName),
-            _descriptionFontSize, _descriptionLetterSpacing, _descriptionOverrides);
+        var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleState.FontFamilyName),
+            _titleState.FontSize, _titleState.LetterSpacing, _titleState.Overrides);
+        var descriptionStyles = CharacterStyleBuilder.Build(DescriptionText, new FontFamily(_descriptionState.FontFamilyName),
+            _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.Overrides);
 
         var request = new CardCompositionRequest
         {
@@ -293,7 +317,7 @@ public partial class MainViewModel : ObservableObject
             KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
             DescriptionText = DescriptionText,
             DescriptionCharacterStyles = descriptionStyles,
-            DescriptionLineSpacing = _descriptionLineSpacingOverride ?? _descriptionLineSpacing,
+            DescriptionLineSpacing = _descriptionState.LineSpacing,
         };
 
         PreviewImage = _compositionService.Compose(request);
@@ -308,5 +332,15 @@ public partial class MainViewModel : ObservableObject
         image.EndInit();
         image.Freeze();
         return image;
+    }
+
+    // ②タイトル・④説明文それぞれの、統一設定(共通設定)と文字区間ごとの個別上書きを保持する。
+    private sealed class TextElementState
+    {
+        public required string FontFamilyName { get; set; }
+        public required double FontSize { get; set; }
+        public required double LetterSpacing { get; set; }
+        public double LineSpacing { get; set; }
+        public List<CharacterStyleOverride> Overrides { get; } = [];
     }
 }

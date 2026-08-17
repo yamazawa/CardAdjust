@@ -17,7 +17,9 @@
     <Window.Resources>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
     </Window.Resources>
-    <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}">
+    <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}"
+          Background="Transparent"
+          behaviors:ClearFocusOnClickBehavior.IsEnabled="True">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
