@@ -1,70 +1,98 @@
 using System.Globalization;
 using System.Windows;
 using System.Windows.Media;
+using CardAdjust.Models;
 
 namespace CardAdjust.Services;
 
 /// <summary>
-/// タイトル・説明文を、1文字ずつ間隔を指定して描画するサービス
+/// タイトル・説明文を、1文字ずつスタイル(フォント種類・サイズ・文字間隔)を指定して描画するサービス
 ///
-/// WPF標準のテキスト描画は文字間隔(文字ごとの追加スペース)を
+/// WPF標準のテキスト描画は文字間隔(文字ごとの追加スペース)や文字単位のフォント切り替えを
 /// サポートしないため、1文字ずつFormattedTextを作って個別に配置する。
 /// </summary>
 public class CardTextRenderer
 {
     /// <summary>
     /// 1行のテキストを、指定した矩形内に水平・垂直共に中央揃えで描画する
+    ///
+    /// stylesはtextと同じ長さ(1文字につき1要素)で渡す。
     /// </summary>
-    public void DrawCenteredSingleLine(DrawingContext context, string text, Rect rect,
-        FontFamily fontFamily, double fontSize, double letterSpacing, Brush foreground)
+    public void DrawCenteredSingleLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect, Brush foreground)
     {
-        if (string.IsNullOrEmpty(text))
+        if (text.Length == 0)
             return;
 
-        var typeface = new Typeface(fontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-        var glyphs = text.Select(c => CreateFormattedText(c.ToString(), typeface, fontSize, foreground)).ToList();
-
-        var totalWidth = glyphs.Sum(g => g.Width) + letterSpacing * Math.Max(0, glyphs.Count - 1);
+        var glyphs = text.Select((c, i) => CreateFormattedText(c.ToString(), TypefaceFor(styles[i]), styles[i].FontSize, foreground)).ToList();
+        var spacingTotal = Enumerable.Range(0, glyphs.Count - 1).Sum(i => styles[i].LetterSpacing);
+        var totalWidth = glyphs.Sum(g => g.Width) + spacingTotal;
         var lineHeight = glyphs.Max(g => g.Height);
 
         var x = rect.X + (rect.Width - totalWidth) / 2;
         var y = rect.Y + (rect.Height - lineHeight) / 2;
 
-        foreach (var glyph in glyphs)
+        for (var i = 0; i < glyphs.Count; i++)
         {
-            context.DrawText(glyph, new Point(x, y));
-            x += glyph.Width + letterSpacing;
+            context.DrawText(glyphs[i], new Point(x, y));
+            x += glyphs[i].Width + styles[i].LetterSpacing;
         }
     }
 
     /// <summary>
     /// 複数行のテキストを、指定した矩形内に水平は左揃え、垂直はブロック全体で中央揃えして描画する
+    ///
+    /// 改行(\n)は描画せず、行の区切りとしてのみ扱う。stylesはtextと同じ長さで渡す
+    /// (改行文字の位置にも要素は必要だが、その値は描画に使われない)。
     /// </summary>
-    public void DrawLeftAlignedMultiLine(DrawingContext context, string text, Rect rect,
-        FontFamily fontFamily, double fontSize, double letterSpacing, double lineSpacing, Brush foreground)
+    public void DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
+        double lineSpacing, Brush foreground)
     {
-        if (string.IsNullOrEmpty(text))
+        if (text.Length == 0)
             return;
 
-        var typeface = new Typeface(fontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
-        var lines = text.Split('\n');
-        var lineHeight = CreateFormattedText("あ", typeface, fontSize, foreground).Height;
-        var totalHeight = lineHeight * lines.Length + lineSpacing * Math.Max(0, lines.Length - 1);
+        var lines = SplitIntoLines(text, styles);
+        var lineHeights = lines
+            .Select(line => line.Count == 0 ? 0 : line.Max(c => CreateFormattedText(c.Character.ToString(), TypefaceFor(c), c.FontSize, foreground).Height))
+            .ToList();
+        var totalHeight = lineHeights.Sum() + lineSpacing * Math.Max(0, lines.Count - 1);
 
         var y = rect.Y + (rect.Height - totalHeight) / 2;
-        foreach (var line in lines)
+        for (var i = 0; i < lines.Count; i++)
         {
             var x = rect.X;
-            foreach (var c in line)
+            foreach (var style in lines[i])
             {
-                var glyph = CreateFormattedText(c.ToString(), typeface, fontSize, foreground);
+                var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, foreground);
                 context.DrawText(glyph, new Point(x, y));
-                x += glyph.Width + letterSpacing;
+                x += glyph.Width + style.LetterSpacing;
             }
 
-            y += lineHeight + lineSpacing;
+            y += lineHeights[i] + lineSpacing;
         }
     }
+
+    private static List<List<CharacterStyle>> SplitIntoLines(string text, IReadOnlyList<CharacterStyle> styles)
+    {
+        var lines = new List<List<CharacterStyle>>();
+        var current = new List<CharacterStyle>();
+        for (var i = 0; i < text.Length; i++)
+        {
+            if (text[i] == '\n')
+            {
+                lines.Add(current);
+                current = [];
+                continue;
+            }
+
+            current.Add(styles[i]);
+        }
+
+        lines.Add(current);
+        return lines;
+    }
+
+    private static Typeface TypefaceFor(CharacterStyle style) =>
+        new(style.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
 
     private static FormattedText CreateFormattedText(string text, Typeface typeface, double fontSize, Brush foreground) =>
         new(text, CultureInfo.GetCultureInfo("ja-JP"), FlowDirection.LeftToRight, typeface, fontSize, foreground, 1.0);
