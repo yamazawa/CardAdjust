@@ -8,11 +8,13 @@ namespace CardAdjust.Services;
 /// <summary>
 /// カード要素(①外枠～④説明文)を合成してプレビュー画像を作るサービス
 ///
-/// 現時点では①外枠のみを合成する。②③④の描画は各タスクで追加する。
+/// 現時点では①外枠・②タイトルを合成する。③④の描画は各タスクで追加する。
 /// </summary>
 public class CardCompositionService
 {
     private const string FrameTemplateUri = "pack://application:,,,/image/黒枠線テンプレート.png";
+
+    private readonly CardTextRenderer _textRenderer = new();
 
     public BitmapImage LoadFrameTemplate()
     {
@@ -25,14 +27,17 @@ public class CardCompositionService
         return image;
     }
 
-    public BitmapSource Compose(BitmapSource frameTemplate)
+    public BitmapSource Compose(CardCompositionRequest request)
     {
         var canvasRect = new Rect(0, 0, CardTemplateLayout.TemplateWidth, CardTemplateLayout.TemplateHeight);
 
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
         {
-            context.DrawImage(frameTemplate, canvasRect);
+            context.DrawImage(request.FrameTemplate, canvasRect);
+
+            _textRenderer.DrawCenteredSingleLine(context, request.TitleText, CardTemplateLayout.TitleRect,
+                request.TitleFontFamily, request.TitleFontSize, request.TitleLetterSpacing, Brushes.White);
         }
 
         var bitmap = new RenderTargetBitmap(

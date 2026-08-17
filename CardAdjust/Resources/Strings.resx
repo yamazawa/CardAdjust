@@ -70,4 +70,13 @@
   <data name="Header_Preview" xml:space="preserve">
     <value>プレビュー</value>
   </data>
+  <data name="Label_Title" xml:space="preserve">
+    <value>タイトル</value>
+  </data>
+  <data name="Button_Read" xml:space="preserve">
+    <value>読取</value>
+  </data>
+  <data name="Button_Adjust" xml:space="preserve">
+    <value>調整</value>
+  </data>
 </root>

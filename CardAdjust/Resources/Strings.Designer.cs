@@ -95,5 +95,32 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("WindowTitle", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   タイトル に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_Title {
+            get {
+                return ResourceManager.GetString("Label_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   読取 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_Read {
+            get {
+                return ResourceManager.GetString("Button_Read", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   調整 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_Adjust {
+            get {
+                return ResourceManager.GetString("Button_Adjust", resourceCulture);
+            }
+        }
     }
 }
