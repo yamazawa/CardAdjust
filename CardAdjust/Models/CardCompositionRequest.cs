@@ -16,4 +16,7 @@ public sealed class CardCompositionRequest
     public required FontFamily TitleFontFamily { get; init; }
     public double TitleFontSize { get; init; }
     public double TitleLetterSpacing { get; init; }
+
+    public BitmapSource? IllustrationImage { get; init; }
+    public bool KeepIllustrationAspectRatio { get; init; }
 }
