@@ -8,6 +8,7 @@
         xmlns:resx="clr-namespace:CardAdjust.Resources"
         xmlns:conv="clr-namespace:CardAdjust.Converters"
         xmlns:behaviors="clr-namespace:CardAdjust.Behaviors"
+        xmlns:models="clr-namespace:CardAdjust.Models"
         mc:Ignorable="d"
         Title="{x:Static resx:Strings.WindowTitle}"
         Height="{Binding WindowHeight, Mode=TwoWay}"
@@ -36,11 +37,33 @@
                      DisplayMemberPath="DisplayName" />
         </DockPanel>
 
-        <!-- 元画像。選択中カードの生画像をそのまま表示する。 -->
+        <!-- 元画像。選択中カードの生画像に、②③④の読取矩形をドラッグ可能な状態で重ねて表示する。 -->
         <DockPanel Grid.Column="1" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_SourceImage}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
-            <Image Source="{Binding SourceImage}" Stretch="Uniform" />
+            <Viewbox Stretch="Uniform">
+                <Grid Width="{x:Static models:CardTemplateLayout.TemplateWidth}"
+                      Height="{x:Static models:CardTemplateLayout.TemplateHeight}">
+                    <Image Source="{Binding SourceImage}" Stretch="Fill" />
+                    <Canvas>
+                        <Border Canvas.Left="{Binding TitleRegionX}" Canvas.Top="{Binding TitleRegionY}"
+                                Width="{x:Static models:CardTemplateLayout.TitleWidth}"
+                                Height="{x:Static models:CardTemplateLayout.TitleHeight}"
+                                BorderBrush="DodgerBlue" BorderThickness="3" Background="#33007ACC" Cursor="SizeAll"
+                                behaviors:DragMoveBehavior.IsEnabled="True" />
+                        <Border Canvas.Left="{Binding IllustrationRegionX}" Canvas.Top="{Binding IllustrationRegionY}"
+                                Width="{x:Static models:CardTemplateLayout.IllustrationWidth}"
+                                Height="{x:Static models:CardTemplateLayout.IllustrationHeight}"
+                                BorderBrush="Orange" BorderThickness="3" Background="#33FF8C00" Cursor="SizeAll"
+                                behaviors:DragMoveBehavior.IsEnabled="True" />
+                        <Border Canvas.Left="{Binding DescriptionRegionX}" Canvas.Top="{Binding DescriptionRegionY}"
+                                Width="{x:Static models:CardTemplateLayout.DescriptionWidth}"
+                                Height="{x:Static models:CardTemplateLayout.DescriptionHeight}"
+                                BorderBrush="Green" BorderThickness="3" Background="#3300A000" Cursor="SizeAll"
+                                behaviors:DragMoveBehavior.IsEnabled="True" />
+                    </Canvas>
+                </Grid>
+            </Viewbox>
         </DockPanel>
 
         <!-- プレビュー。①外枠～④説明文を合成した完成イメージを表示する。 -->
