@@ -158,5 +158,77 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("Label_Description", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   個別調整 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string AdjustDialog_Title {
+            get {
+                return ResourceManager.GetString("AdjustDialog_Title", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   フォント種類 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_FontFamily {
+            get {
+                return ResourceManager.GetString("Label_FontFamily", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   サイズ に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_FontSize {
+            get {
+                return ResourceManager.GetString("Label_FontSize", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   文字間隔 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_LetterSpacing {
+            get {
+                return ResourceManager.GetString("Label_LetterSpacing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   行間隔 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_LineSpacing {
+            get {
+                return ResourceManager.GetString("Label_LineSpacing", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   クリア に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_Clear {
+            get {
+                return ResourceManager.GetString("Button_Clear", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   キャンセル に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_Cancel {
+            get {
+                return ResourceManager.GetString("Button_Cancel", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   OK に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_Ok {
+            get {
+                return ResourceManager.GetString("Button_Ok", resourceCulture);
+            }
+        }
     }
 }

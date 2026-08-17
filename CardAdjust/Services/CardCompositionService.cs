@@ -38,12 +38,11 @@ public class CardCompositionService
 
             DrawIllustration(context, request.IllustrationImage, CardTemplateLayout.IllustrationRect, request.KeepIllustrationAspectRatio);
 
-            _textRenderer.DrawCenteredSingleLine(context, request.TitleText, CardTemplateLayout.TitleRect,
-                request.TitleFontFamily, request.TitleFontSize, request.TitleLetterSpacing, Brushes.White);
+            _textRenderer.DrawCenteredSingleLine(context, request.TitleText, request.TitleCharacterStyles,
+                CardTemplateLayout.TitleRect, Brushes.White);
 
-            _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, CardTemplateLayout.DescriptionRect,
-                request.DescriptionFontFamily, request.DescriptionFontSize, request.DescriptionLetterSpacing,
-                request.DescriptionLineSpacing, Brushes.White);
+            _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, request.DescriptionCharacterStyles,
+                CardTemplateLayout.DescriptionRect, request.DescriptionLineSpacing, Brushes.White);
         }
 
         var bitmap = new RenderTargetBitmap(

@@ -18,6 +18,7 @@ public partial class MainViewModel : ObservableObject
     private readonly AppSettingsService _settingsService;
     private readonly CardCompositionService _compositionService;
     private readonly OcrService _ocrService;
+    private readonly AdjustDialogService _adjustDialogService;
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
 
@@ -31,6 +32,13 @@ public partial class MainViewModel : ObservableObject
     private readonly double _descriptionLetterSpacing;
     private readonly double _descriptionLineSpacing;
 
+    // 個別調整ダイアログで設定した、文字区間ごとのフォント上書き。カード切替時にクリアする。
+    private readonly List<CharacterStyleOverride> _titleOverrides = [];
+    private readonly List<CharacterStyleOverride> _descriptionOverrides = [];
+
+    // ④説明文の行間隔は文字区間ではなくテキスト全体への上書きのため、単独で持つ。
+    private double? _descriptionLineSpacingOverride;
+
     [ObservableProperty]
     private IReadOnlyList<CardImage> _cardList;
 
@@ -41,13 +49,20 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private BitmapImage? _sourceImage;
 
-    // ①～④を合成したプレビュー画像。③④の描画が実装されるまでは①外枠・②タイトルのみ。
+    // ①～④を合成したプレビュー画像。
     [ObservableProperty]
     private BitmapSource? _previewImage;
 
     // ②タイトルの文字列。テキストボックスと双方向バインドし、変更のたびにプレビューを再合成する。
     [ObservableProperty]
     private string _titleText = string.Empty;
+
+    // ②タイトルのテキストボックスでの選択範囲。個別調整ダイアログの対象区間として使う。
+    [ObservableProperty]
+    private int _titleSelectionStart;
+
+    [ObservableProperty]
+    private int _titleSelectionLength;
 
     // ③イラストの切り抜き画像。読取ボタンを押したときのみ更新する。
     [ObservableProperty]
@@ -61,6 +76,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _descriptionText = string.Empty;
 
+    // ④説明文のテキストボックスでの選択範囲。個別調整ダイアログの対象区間として使う。
+    [ObservableProperty]
+    private int _descriptionSelectionStart;
+
+    [ObservableProperty]
+    private int _descriptionSelectionLength;
+
     [ObservableProperty]
     private double _windowWidth;
 
@@ -68,11 +90,13 @@ public partial class MainViewModel : ObservableObject
     private double _windowHeight;
 
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
-        OcrService ocrService, AppSettingsService settingsService, AppSettings settings, string cardFolder)
+        OcrService ocrService, AdjustDialogService adjustDialogService, AppSettingsService settingsService,
+        AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
         _compositionService = compositionService;
         _ocrService = ocrService;
+        _adjustDialogService = adjustDialogService;
 
         _titleFontFamilyName = settings.TitleFontFamily;
         _titleFontSize = settings.TitleFontSize;
@@ -115,6 +139,33 @@ public partial class MainViewModel : ObservableObject
     }
 
     /// <summary>
+    /// 選択中のタイトル文字列に対する個別調整ダイアログを開く
+    /// </summary>
+    [RelayCommand]
+    private void AdjustTitle()
+    {
+        if (TitleSelectionLength <= 0)
+            return;
+
+        var existing = _titleOverrides.FirstOrDefault(o => o.Start == TitleSelectionStart && o.Length == TitleSelectionLength);
+        var result = _adjustDialogService.Show(
+            existing?.FontFamilyName ?? _titleFontFamilyName,
+            existing?.FontSize ?? _titleFontSize,
+            existing?.LetterSpacing ?? _titleLetterSpacing,
+            lineSpacing: 0,
+            showLineSpacing: false);
+
+        if (result is null)
+            return;
+
+        _titleOverrides.RemoveAll(o => RangesOverlap(o, TitleSelectionStart, TitleSelectionLength));
+        if (!result.IsCleared)
+            _titleOverrides.Add(new CharacterStyleOverride(TitleSelectionStart, TitleSelectionLength, result.FontFamilyName, result.FontSize, result.LetterSpacing));
+
+        RecomposePreview();
+    }
+
+    /// <summary>
     /// イラスト領域を矩形で切り抜き、表示矩形に貼り付ける
     /// </summary>
     [RelayCommand]
@@ -144,12 +195,49 @@ public partial class MainViewModel : ObservableObject
         DescriptionText = string.Join('\n', lines);
     }
 
+    /// <summary>
+    /// 選択中の説明文文字列に対する個別調整ダイアログを開く(行間隔も対象に含める)
+    /// </summary>
+    [RelayCommand]
+    private void AdjustDescription()
+    {
+        if (DescriptionSelectionLength <= 0)
+            return;
+
+        var existing = _descriptionOverrides.FirstOrDefault(o => o.Start == DescriptionSelectionStart && o.Length == DescriptionSelectionLength);
+        var result = _adjustDialogService.Show(
+            existing?.FontFamilyName ?? _descriptionFontFamilyName,
+            existing?.FontSize ?? _descriptionFontSize,
+            existing?.LetterSpacing ?? _descriptionLetterSpacing,
+            _descriptionLineSpacingOverride ?? _descriptionLineSpacing,
+            showLineSpacing: true);
+
+        if (result is null)
+            return;
+
+        _descriptionOverrides.RemoveAll(o => RangesOverlap(o, DescriptionSelectionStart, DescriptionSelectionLength));
+        _descriptionLineSpacingOverride = result.IsCleared ? null : result.LineSpacing;
+        if (!result.IsCleared)
+        {
+            _descriptionOverrides.Add(new CharacterStyleOverride(
+                DescriptionSelectionStart, DescriptionSelectionLength, result.FontFamilyName, result.FontSize, result.LetterSpacing));
+        }
+
+        RecomposePreview();
+    }
+
+    private static bool RangesOverlap(CharacterStyleOverride o, int start, int length) =>
+        o.Start < start + length && start < o.Start + o.Length;
+
     partial void OnSelectedCardChanged(CardImage? value)
     {
         SourceImage = value is null ? null : LoadImage(value.FilePath);
         TitleText = string.Empty;
         IllustrationImage = null;
         DescriptionText = string.Empty;
+        _titleOverrides.Clear();
+        _descriptionOverrides.Clear();
+        _descriptionLineSpacingOverride = null;
     }
 
     partial void OnTitleTextChanged(string value) => RecomposePreview();
@@ -158,7 +246,18 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnKeepIllustrationAspectRatioChanged(bool value) => RecomposePreview();
 
-    partial void OnDescriptionTextChanged(string value) => RecomposePreview();
+    partial void OnDescriptionTextChanged(string value)
+    {
+        // AcceptsReturn=TrueのTextBoxはEnter入力時に\r\nを挿入するため、
+        // 個別調整の区間位置が\nのみの想定とずれないよう正規化する。
+        if (value.Contains('\r'))
+        {
+            DescriptionText = value.Replace("\r\n", "\n").Replace('\r', '\n');
+            return;
+        }
+
+        RecomposePreview();
+    }
 
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
 
@@ -181,20 +280,20 @@ public partial class MainViewModel : ObservableObject
 
     private void RecomposePreview()
     {
+        var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleFontFamilyName), _titleFontSize, _titleLetterSpacing, _titleOverrides);
+        var descriptionStyles = CharacterStyleBuilder.Build(DescriptionText, new FontFamily(_descriptionFontFamilyName),
+            _descriptionFontSize, _descriptionLetterSpacing, _descriptionOverrides);
+
         var request = new CardCompositionRequest
         {
             FrameTemplate = _frameTemplate,
             TitleText = TitleText,
-            TitleFontFamily = new FontFamily(_titleFontFamilyName),
-            TitleFontSize = _titleFontSize,
-            TitleLetterSpacing = _titleLetterSpacing,
+            TitleCharacterStyles = titleStyles,
             IllustrationImage = IllustrationImage,
             KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
             DescriptionText = DescriptionText,
-            DescriptionFontFamily = new FontFamily(_descriptionFontFamilyName),
-            DescriptionFontSize = _descriptionFontSize,
-            DescriptionLetterSpacing = _descriptionLetterSpacing,
-            DescriptionLineSpacing = _descriptionLineSpacing,
+            DescriptionCharacterStyles = descriptionStyles,
+            DescriptionLineSpacing = _descriptionLineSpacingOverride ?? _descriptionLineSpacing,
         };
 
         PreviewImage = _compositionService.Compose(request);
