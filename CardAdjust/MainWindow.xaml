@@ -17,6 +17,7 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
         <!-- カード一覧。フォルダ内の画像を選択してプレビュー対象を切り替える。 -->
@@ -41,5 +42,24 @@
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <Image Source="{Binding PreviewImage}" Stretch="Uniform" />
         </DockPanel>
+
+        <!-- 要素操作。②③④それぞれの読取・調整ボタンとテキストボックスを並べる。 -->
+        <StackPanel Grid.Column="3" Width="{x:Static styles:LayoutConstants.ElementPanelWidth}"
+                    Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+            <StackPanel Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
+                <TextBlock Text="{x:Static resx:Strings.Label_Title}"
+                           FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+                <TextBox Text="{Binding TitleText, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="{x:Static resx:Strings.Button_Read}"
+                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                            Command="{Binding ReadTitleCommand}" />
+                    <Button Content="{x:Static resx:Strings.Button_Adjust}"
+                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                            IsEnabled="False" />
+                </StackPanel>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Window>
