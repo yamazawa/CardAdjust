@@ -35,11 +35,11 @@
             <Image Source="{Binding SourceImage}" Stretch="Uniform" />
         </DockPanel>
 
-        <!-- プレビュー。要素合成(①外枠～④説明文)が実装されるまでは元画像と同じ内容を表示する。 -->
+        <!-- プレビュー。①外枠～④説明文を合成した完成イメージを表示する。 -->
         <DockPanel Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_Preview}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
-            <Image Source="{Binding SourceImage}" Stretch="Uniform" />
+            <Image Source="{Binding PreviewImage}" Stretch="Uniform" />
         </DockPanel>
     </Grid>
 </Window>

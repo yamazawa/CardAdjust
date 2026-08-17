@@ -32,7 +32,8 @@ public partial class App : Application
         var appSettings = _settingsService.LoadOrCreateDefault();
 
         var cardFolderService = new CardFolderService();
-        _viewModel = new MainViewModel(cardFolderService, _settingsService, appSettings, cardFolder);
+        var compositionService = new CardCompositionService();
+        _viewModel = new MainViewModel(cardFolderService, compositionService, _settingsService, appSettings, cardFolder);
 
         _autoSaveTimer = new DispatcherTimer { Interval = AutoSaveInterval };
         _autoSaveTimer.Tick += (_, _) => _viewModel.SaveSettingsIfDirty();

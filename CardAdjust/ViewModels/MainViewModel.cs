@@ -8,11 +8,14 @@ namespace CardAdjust.ViewModels;
 /// <summary>
 /// メイン画面のViewModel
 ///
-/// カード一覧の読み込み・選択と、選択中カードの元画像表示を担う。
+/// カード一覧の読み込み・選択、選択中カードの元画像表示、
+/// ①～④を合成したプレビュー表示を担う。
 /// </summary>
 public partial class MainViewModel : ObservableObject
 {
     private readonly AppSettingsService _settingsService;
+    private readonly CardCompositionService _compositionService;
+    private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
 
     [ObservableProperty]
@@ -21,10 +24,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private CardImage? _selectedCard;
 
-    // 選択中カードの元画像。プレビュー合成が実装されるまでは、
-    // プレビュー欄にもこの画像をそのまま表示する。
+    // 選択中カードの元画像。
     [ObservableProperty]
     private BitmapImage? _sourceImage;
+
+    // ①～④を合成したプレビュー画像。②③④の描画が実装されるまでは①外枠のみ。
+    [ObservableProperty]
+    private BitmapSource? _previewImage;
 
     [ObservableProperty]
     private double _windowWidth;
@@ -32,9 +38,11 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _windowHeight;
 
-    public MainViewModel(CardFolderService cardFolderService, AppSettingsService settingsService, AppSettings settings, string cardFolder)
+    public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
+        AppSettingsService settingsService, AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
+        _compositionService = compositionService;
 
         // 初期表示時点ではまだ設定変更ではないため、_settingsDirtyを立てないよう
         // プロパティではなくフィールドへ直接代入する。
@@ -43,6 +51,9 @@ public partial class MainViewModel : ObservableObject
 
         _cardList = cardFolderService.LoadCardList(cardFolder);
         SelectedCard = CardList.FirstOrDefault();
+
+        _frameTemplate = _compositionService.LoadFrameTemplate();
+        PreviewImage = _compositionService.Compose(_frameTemplate);
     }
 
     partial void OnSelectedCardChanged(CardImage? value) =>
