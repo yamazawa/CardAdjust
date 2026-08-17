@@ -19,4 +19,10 @@ public sealed class CardCompositionRequest
 
     public BitmapSource? IllustrationImage { get; init; }
     public bool KeepIllustrationAspectRatio { get; init; }
+
+    public string DescriptionText { get; init; } = string.Empty;
+    public required FontFamily DescriptionFontFamily { get; init; }
+    public double DescriptionFontSize { get; init; }
+    public double DescriptionLetterSpacing { get; init; }
+    public double DescriptionLineSpacing { get; init; }
 }

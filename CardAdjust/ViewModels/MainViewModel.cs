@@ -21,11 +21,15 @@ public partial class MainViewModel : ObservableObject
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
 
-    // ②タイトルの統一レイアウト設定。④説明文(タスク5)とは別に保持する。
+    // ②タイトル・④説明文の統一レイアウト設定。互いに別に保持する。
     // 編集用のUIはまだ無いため、起動時に読み込んだ値をそのまま使う。
     private readonly string _titleFontFamilyName;
     private readonly double _titleFontSize;
     private readonly double _titleLetterSpacing;
+    private readonly string _descriptionFontFamilyName;
+    private readonly double _descriptionFontSize;
+    private readonly double _descriptionLetterSpacing;
+    private readonly double _descriptionLineSpacing;
 
     [ObservableProperty]
     private IReadOnlyList<CardImage> _cardList;
@@ -53,6 +57,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _keepIllustrationAspectRatio;
 
+    // ④説明文の文字列。複数行はテキストボックスの改行(\n)で区切る。
+    [ObservableProperty]
+    private string _descriptionText = string.Empty;
+
     [ObservableProperty]
     private double _windowWidth;
 
@@ -69,6 +77,10 @@ public partial class MainViewModel : ObservableObject
         _titleFontFamilyName = settings.TitleFontFamily;
         _titleFontSize = settings.TitleFontSize;
         _titleLetterSpacing = settings.TitleLetterSpacing;
+        _descriptionFontFamilyName = settings.DescriptionFontFamily;
+        _descriptionFontSize = settings.DescriptionFontSize;
+        _descriptionLetterSpacing = settings.DescriptionLetterSpacing;
+        _descriptionLineSpacing = settings.DescriptionLineSpacing;
 
         // 初期表示時点ではまだ設定変更ではないため、_settingsDirtyを立てないよう
         // プロパティではなくフィールドへ直接代入する。
@@ -114,11 +126,30 @@ public partial class MainViewModel : ObservableObject
         IllustrationImage = ImageCropper.Crop(SourceImage, CardTemplateLayout.IllustrationRect);
     }
 
+    /// <summary>
+    /// 説明文領域からWindows OCRで文字列を抽出し、テキストボックスへ反映する
+    ///
+    /// ②タイトルと同じ抽出処理を、複数行対応のため行単位で適用する。
+    /// </summary>
+    [RelayCommand]
+    private async Task ReadDescriptionAsync()
+    {
+        if (SourceImage is null)
+            return;
+
+        var cropped = ImageCropper.Crop(SourceImage, CardTemplateLayout.DescriptionRect);
+        var recognized = await _ocrService.RecognizeTextAsync(cropped);
+
+        var lines = recognized.Split('\n').Select(line => string.Concat(line.Where(c => !char.IsWhiteSpace(c))));
+        DescriptionText = string.Join('\n', lines);
+    }
+
     partial void OnSelectedCardChanged(CardImage? value)
     {
         SourceImage = value is null ? null : LoadImage(value.FilePath);
         TitleText = string.Empty;
         IllustrationImage = null;
+        DescriptionText = string.Empty;
     }
 
     partial void OnTitleTextChanged(string value) => RecomposePreview();
@@ -126,6 +157,8 @@ public partial class MainViewModel : ObservableObject
     partial void OnIllustrationImageChanged(BitmapSource? value) => RecomposePreview();
 
     partial void OnKeepIllustrationAspectRatioChanged(bool value) => RecomposePreview();
+
+    partial void OnDescriptionTextChanged(string value) => RecomposePreview();
 
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
 
@@ -142,7 +175,8 @@ public partial class MainViewModel : ObservableObject
             return;
 
         _settingsDirty = false;
-        _settingsService.Save(new AppSettings(WindowWidth, WindowHeight, _titleFontFamilyName, _titleFontSize, _titleLetterSpacing));
+        _settingsService.Save(new AppSettings(WindowWidth, WindowHeight, _titleFontFamilyName, _titleFontSize, _titleLetterSpacing,
+            _descriptionFontFamilyName, _descriptionFontSize, _descriptionLetterSpacing, _descriptionLineSpacing));
     }
 
     private void RecomposePreview()
@@ -156,6 +190,11 @@ public partial class MainViewModel : ObservableObject
             TitleLetterSpacing = _titleLetterSpacing,
             IllustrationImage = IllustrationImage,
             KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
+            DescriptionText = DescriptionText,
+            DescriptionFontFamily = new FontFamily(_descriptionFontFamilyName),
+            DescriptionFontSize = _descriptionFontSize,
+            DescriptionLetterSpacing = _descriptionLetterSpacing,
+            DescriptionLineSpacing = _descriptionLineSpacing,
         };
 
         PreviewImage = _compositionService.Compose(request);

@@ -149,5 +149,14 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("RadioButton_DontKeepAspectRatio", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   説明文 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_Description {
+            get {
+                return ResourceManager.GetString("Label_Description", resourceCulture);
+            }
+        }
     }
 }

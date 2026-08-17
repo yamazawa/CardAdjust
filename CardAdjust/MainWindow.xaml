@@ -85,6 +85,23 @@
                             IsEnabled="False" />
                 </StackPanel>
             </StackPanel>
+
+            <StackPanel Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
+                <TextBlock Text="{x:Static resx:Strings.Label_Description}"
+                           FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+                <TextBox Text="{Binding DescriptionText, UpdateSourceTrigger=PropertyChanged}"
+                         Margin="{x:Static styles:LayoutConstants.FieldSpacing}"
+                         AcceptsReturn="True" TextWrapping="Wrap"
+                         Height="{x:Static styles:LayoutConstants.DescriptionTextBoxHeight}" />
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="{x:Static resx:Strings.Button_Read}"
+                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                            Command="{Binding ReadDescriptionCommand}" />
+                    <Button Content="{x:Static resx:Strings.Button_Adjust}"
+                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                            IsEnabled="False" />
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>
