@@ -6,12 +6,16 @@
         xmlns:local="clr-namespace:CardAdjust"
         xmlns:styles="clr-namespace:CardAdjust.Styles"
         xmlns:resx="clr-namespace:CardAdjust.Resources"
+        xmlns:conv="clr-namespace:CardAdjust.Converters"
         mc:Ignorable="d"
         Title="{x:Static resx:Strings.WindowTitle}"
         Height="{Binding WindowHeight, Mode=TwoWay}"
         Width="{Binding WindowWidth, Mode=TwoWay}"
         MinHeight="{x:Static styles:LayoutConstants.WindowMinHeight}"
         MinWidth="{x:Static styles:LayoutConstants.WindowMinWidth}">
+    <Window.Resources>
+        <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+    </Window.Resources>
     <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
@@ -55,6 +59,27 @@
                     <Button Content="{x:Static resx:Strings.Button_Read}"
                             Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                             Command="{Binding ReadTitleCommand}" />
+                    <Button Content="{x:Static resx:Strings.Button_Adjust}"
+                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                            IsEnabled="False" />
+                </StackPanel>
+            </StackPanel>
+
+            <StackPanel Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
+                <TextBlock Text="{x:Static resx:Strings.Label_Illustration}"
+                           FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+                <StackPanel Orientation="Horizontal" Margin="{x:Static styles:LayoutConstants.FieldSpacing}">
+                    <RadioButton GroupName="IllustrationAspectRatio" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                                 Content="{x:Static resx:Strings.RadioButton_KeepAspectRatio}"
+                                 IsChecked="{Binding KeepIllustrationAspectRatio}" />
+                    <RadioButton GroupName="IllustrationAspectRatio" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                                 Content="{x:Static resx:Strings.RadioButton_DontKeepAspectRatio}"
+                                 IsChecked="{Binding KeepIllustrationAspectRatio, Converter={StaticResource InverseBooleanConverter}}" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button Content="{x:Static resx:Strings.Button_Read}"
+                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                            Command="{Binding ReadIllustrationCommand}" />
                     <Button Content="{x:Static resx:Strings.Button_Adjust}"
                             Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                             IsEnabled="False" />

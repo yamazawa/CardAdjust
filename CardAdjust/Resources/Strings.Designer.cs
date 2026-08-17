@@ -122,5 +122,32 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("Button_Adjust", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   イラスト に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_Illustration {
+            get {
+                return ResourceManager.GetString("Label_Illustration", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   キープする に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string RadioButton_KeepAspectRatio {
+            get {
+                return ResourceManager.GetString("RadioButton_KeepAspectRatio", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   キープしない に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string RadioButton_DontKeepAspectRatio {
+            get {
+                return ResourceManager.GetString("RadioButton_DontKeepAspectRatio", resourceCulture);
+            }
+        }
     }
 }

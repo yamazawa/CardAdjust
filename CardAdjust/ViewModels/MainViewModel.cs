@@ -45,6 +45,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _titleText = string.Empty;
 
+    // ③イラストの切り抜き画像。読取ボタンを押したときのみ更新する。
+    [ObservableProperty]
+    private BitmapSource? _illustrationImage;
+
+    // ③イラストの縦横比キープ有無。初期値はキープしない。
+    [ObservableProperty]
+    private bool _keepIllustrationAspectRatio;
+
     [ObservableProperty]
     private double _windowWidth;
 
@@ -94,13 +102,30 @@ public partial class MainViewModel : ObservableObject
         TitleText = string.Concat(recognized.Where(c => !char.IsWhiteSpace(c)));
     }
 
+    /// <summary>
+    /// イラスト領域を矩形で切り抜き、表示矩形に貼り付ける
+    /// </summary>
+    [RelayCommand]
+    private void ReadIllustration()
+    {
+        if (SourceImage is null)
+            return;
+
+        IllustrationImage = ImageCropper.Crop(SourceImage, CardTemplateLayout.IllustrationRect);
+    }
+
     partial void OnSelectedCardChanged(CardImage? value)
     {
         SourceImage = value is null ? null : LoadImage(value.FilePath);
         TitleText = string.Empty;
+        IllustrationImage = null;
     }
 
     partial void OnTitleTextChanged(string value) => RecomposePreview();
+
+    partial void OnIllustrationImageChanged(BitmapSource? value) => RecomposePreview();
+
+    partial void OnKeepIllustrationAspectRatioChanged(bool value) => RecomposePreview();
 
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
 
@@ -129,6 +154,8 @@ public partial class MainViewModel : ObservableObject
             TitleFontFamily = new FontFamily(_titleFontFamilyName),
             TitleFontSize = _titleFontSize,
             TitleLetterSpacing = _titleLetterSpacing,
+            IllustrationImage = IllustrationImage,
+            KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
         };
 
         PreviewImage = _compositionService.Compose(request);
