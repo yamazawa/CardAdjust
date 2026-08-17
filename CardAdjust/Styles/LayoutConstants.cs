@@ -16,6 +16,7 @@ public static class LayoutConstants
 
     public const double CardListWidth = 200;
     public const double ElementPanelWidth = 240;
+    public const double DescriptionTextBoxHeight = 80;
 
     public static readonly Thickness RootMargin = new(12);
     public static readonly Thickness SectionSpacing = new(4);

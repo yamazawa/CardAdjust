@@ -8,7 +8,7 @@ namespace CardAdjust.Services;
 /// <summary>
 /// カード要素(①外枠～④説明文)を合成してプレビュー画像を作るサービス
 ///
-/// 現時点では①外枠・②タイトル・③イラストを合成する。④の描画は後続タスクで追加する。
+/// ①外枠・②タイトル・③イラスト・④説明文を合成する。
 /// </summary>
 public class CardCompositionService
 {
@@ -40,6 +40,10 @@ public class CardCompositionService
 
             _textRenderer.DrawCenteredSingleLine(context, request.TitleText, CardTemplateLayout.TitleRect,
                 request.TitleFontFamily, request.TitleFontSize, request.TitleLetterSpacing, Brushes.White);
+
+            _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, CardTemplateLayout.DescriptionRect,
+                request.DescriptionFontFamily, request.DescriptionFontSize, request.DescriptionLetterSpacing,
+                request.DescriptionLineSpacing, Brushes.White);
         }
 
         var bitmap = new RenderTargetBitmap(

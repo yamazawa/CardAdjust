@@ -37,6 +37,35 @@ public class CardTextRenderer
         }
     }
 
+    /// <summary>
+    /// 複数行のテキストを、指定した矩形内に水平は左揃え、垂直はブロック全体で中央揃えして描画する
+    /// </summary>
+    public void DrawLeftAlignedMultiLine(DrawingContext context, string text, Rect rect,
+        FontFamily fontFamily, double fontSize, double letterSpacing, double lineSpacing, Brush foreground)
+    {
+        if (string.IsNullOrEmpty(text))
+            return;
+
+        var typeface = new Typeface(fontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        var lines = text.Split('\n');
+        var lineHeight = CreateFormattedText("あ", typeface, fontSize, foreground).Height;
+        var totalHeight = lineHeight * lines.Length + lineSpacing * Math.Max(0, lines.Length - 1);
+
+        var y = rect.Y + (rect.Height - totalHeight) / 2;
+        foreach (var line in lines)
+        {
+            var x = rect.X;
+            foreach (var c in line)
+            {
+                var glyph = CreateFormattedText(c.ToString(), typeface, fontSize, foreground);
+                context.DrawText(glyph, new Point(x, y));
+                x += glyph.Width + letterSpacing;
+            }
+
+            y += lineHeight + lineSpacing;
+        }
+    }
+
     private static FormattedText CreateFormattedText(string text, Typeface typeface, double fontSize, Brush foreground) =>
         new(text, CultureInfo.GetCultureInfo("ja-JP"), FlowDirection.LeftToRight, typeface, fontSize, foreground, 1.0);
 }

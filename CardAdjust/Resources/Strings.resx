@@ -88,4 +88,7 @@
   <data name="RadioButton_DontKeepAspectRatio" xml:space="preserve">
     <value>キープしない</value>
   </data>
+  <data name="Label_Description" xml:space="preserve">
+    <value>説明文</value>
+  </data>
 </root>
