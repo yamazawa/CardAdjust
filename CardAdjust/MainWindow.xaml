@@ -46,21 +46,43 @@
                       Height="{x:Static models:CardTemplateLayout.TemplateHeight}">
                     <Image Source="{Binding SourceImage}" Stretch="Fill" />
                     <Canvas>
+                        <!-- ドラッグで位置を、右下端のハンドルで幅・高さを個別に調整できる。 -->
                         <Border Canvas.Left="{Binding TitleRegionX}" Canvas.Top="{Binding TitleRegionY}"
-                                Width="{x:Static models:CardTemplateLayout.TitleWidth}"
-                                Height="{x:Static models:CardTemplateLayout.TitleHeight}"
+                                Width="{Binding TitleRegionWidth}" Height="{Binding TitleRegionHeight}"
                                 BorderBrush="DodgerBlue" BorderThickness="3" Background="#33007ACC" Cursor="SizeAll"
-                                behaviors:DragMoveBehavior.IsEnabled="True" />
+                                behaviors:DragMoveBehavior.IsEnabled="True">
+                            <Grid>
+                                <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
+                                           Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
+                                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                           Fill="DodgerBlue" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.IsEnabled="True" />
+                            </Grid>
+                        </Border>
                         <Border Canvas.Left="{Binding IllustrationRegionX}" Canvas.Top="{Binding IllustrationRegionY}"
-                                Width="{x:Static models:CardTemplateLayout.IllustrationWidth}"
-                                Height="{x:Static models:CardTemplateLayout.IllustrationHeight}"
+                                Width="{Binding IllustrationRegionWidth}" Height="{Binding IllustrationRegionHeight}"
                                 BorderBrush="Orange" BorderThickness="3" Background="#33FF8C00" Cursor="SizeAll"
-                                behaviors:DragMoveBehavior.IsEnabled="True" />
+                                behaviors:DragMoveBehavior.IsEnabled="True">
+                            <Grid>
+                                <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
+                                           Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
+                                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                           Fill="Orange" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.IsEnabled="True" />
+                            </Grid>
+                        </Border>
                         <Border Canvas.Left="{Binding DescriptionRegionX}" Canvas.Top="{Binding DescriptionRegionY}"
-                                Width="{x:Static models:CardTemplateLayout.DescriptionWidth}"
-                                Height="{x:Static models:CardTemplateLayout.DescriptionHeight}"
+                                Width="{Binding DescriptionRegionWidth}" Height="{Binding DescriptionRegionHeight}"
                                 BorderBrush="Green" BorderThickness="3" Background="#3300A000" Cursor="SizeAll"
-                                behaviors:DragMoveBehavior.IsEnabled="True" />
+                                behaviors:DragMoveBehavior.IsEnabled="True">
+                            <Grid>
+                                <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
+                                           Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
+                                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                           Fill="Green" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.IsEnabled="True" />
+                            </Grid>
+                        </Border>
                     </Canvas>
                 </Grid>
             </Viewbox>
