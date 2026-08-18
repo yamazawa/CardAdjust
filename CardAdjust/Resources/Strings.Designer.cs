@@ -239,5 +239,14 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("Button_Ok", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   保存 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_Save {
+            get {
+                return ResourceManager.GetString("Button_Save", resourceCulture);
+            }
+        }
     }
 }
