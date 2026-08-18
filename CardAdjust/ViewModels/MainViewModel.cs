@@ -1,3 +1,4 @@
+using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -52,6 +53,19 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _titleSelectionLength;
 
+    // ②タイトルの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _titleRegionX = CardTemplateLayout.TitleX;
+
+    [ObservableProperty]
+    private double _titleRegionY = CardTemplateLayout.TitleY;
+
+    [ObservableProperty]
+    private double _titleRegionWidth = CardTemplateLayout.TitleWidth;
+
+    [ObservableProperty]
+    private double _titleRegionHeight = CardTemplateLayout.TitleHeight;
+
     // ③イラストの切り抜き画像。読取ボタンを押したときのみ更新する。
     [ObservableProperty]
     private BitmapSource? _illustrationImage;
@@ -59,6 +73,19 @@ public partial class MainViewModel : ObservableObject
     // ③イラストの縦横比キープ有無。初期値はキープしない。
     [ObservableProperty]
     private bool _keepIllustrationAspectRatio;
+
+    // ③イラストの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _illustrationRegionX = CardTemplateLayout.IllustrationX;
+
+    [ObservableProperty]
+    private double _illustrationRegionY = CardTemplateLayout.IllustrationY;
+
+    [ObservableProperty]
+    private double _illustrationRegionWidth = CardTemplateLayout.IllustrationWidth;
+
+    [ObservableProperty]
+    private double _illustrationRegionHeight = CardTemplateLayout.IllustrationHeight;
 
     // ④説明文の文字列。複数行はテキストボックスの改行(\n)で区切る。
     [ObservableProperty]
@@ -70,6 +97,19 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private int _descriptionSelectionLength;
+
+    // ④説明文の読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _descriptionRegionX = CardTemplateLayout.DescriptionX;
+
+    [ObservableProperty]
+    private double _descriptionRegionY = CardTemplateLayout.DescriptionY;
+
+    [ObservableProperty]
+    private double _descriptionRegionWidth = CardTemplateLayout.DescriptionWidth;
+
+    [ObservableProperty]
+    private double _descriptionRegionHeight = CardTemplateLayout.DescriptionHeight;
 
     [ObservableProperty]
     private double _windowWidth;
@@ -124,7 +164,8 @@ public partial class MainViewModel : ObservableObject
         if (SourceImage is null)
             return;
 
-        var cropped = ImageCropper.Crop(SourceImage, CardTemplateLayout.TitleRect);
+        var rect = new Rect(TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight);
+        var cropped = ImageCropper.Crop(SourceImage, rect);
         var recognized = await _ocrService.RecognizeTextAsync(cropped);
 
         // 元画像は文字ごとに間隔を空けて描画されている場合があるため、
@@ -149,7 +190,8 @@ public partial class MainViewModel : ObservableObject
         if (SourceImage is null)
             return;
 
-        IllustrationImage = ImageCropper.Crop(SourceImage, CardTemplateLayout.IllustrationRect);
+        var rect = new Rect(IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight);
+        IllustrationImage = ImageCropper.Crop(SourceImage, rect);
     }
 
     /// <summary>
@@ -163,7 +205,8 @@ public partial class MainViewModel : ObservableObject
         if (SourceImage is null)
             return;
 
-        var cropped = ImageCropper.Crop(SourceImage, CardTemplateLayout.DescriptionRect);
+        var rect = new Rect(DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight);
+        var cropped = ImageCropper.Crop(SourceImage, rect);
         var recognized = await _ocrService.RecognizeTextAsync(cropped);
 
         var lines = recognized.Split('\n').Select(line => string.Concat(line.Where(c => !char.IsWhiteSpace(c))));
@@ -255,6 +298,20 @@ public partial class MainViewModel : ObservableObject
         TitleText = string.Empty;
         IllustrationImage = null;
         DescriptionText = string.Empty;
+
+        // 読取矩形の位置・サイズもカードごとの編集セッションに属するため初期値へ戻す。
+        TitleRegionX = CardTemplateLayout.TitleX;
+        TitleRegionY = CardTemplateLayout.TitleY;
+        TitleRegionWidth = CardTemplateLayout.TitleWidth;
+        TitleRegionHeight = CardTemplateLayout.TitleHeight;
+        IllustrationRegionX = CardTemplateLayout.IllustrationX;
+        IllustrationRegionY = CardTemplateLayout.IllustrationY;
+        IllustrationRegionWidth = CardTemplateLayout.IllustrationWidth;
+        IllustrationRegionHeight = CardTemplateLayout.IllustrationHeight;
+        DescriptionRegionX = CardTemplateLayout.DescriptionX;
+        DescriptionRegionY = CardTemplateLayout.DescriptionY;
+        DescriptionRegionWidth = CardTemplateLayout.DescriptionWidth;
+        DescriptionRegionHeight = CardTemplateLayout.DescriptionHeight;
 
         // 文字区間ごとの個別上書きはカードごとの編集セッションに属するためクリアする。
         // 共通設定(フォント・サイズ・間隔)はアプリ全体の設定なので維持する。
