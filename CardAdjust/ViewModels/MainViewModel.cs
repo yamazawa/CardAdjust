@@ -21,6 +21,8 @@ public partial class MainViewModel : ObservableObject
     private readonly CardCompositionService _compositionService;
     private readonly OcrService _ocrService;
     private readonly AdjustDialogService _adjustDialogService;
+    private readonly SaveFileDialogService _saveFileDialogService;
+    private readonly ImageSaveService _imageSaveService;
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
 
@@ -118,13 +120,15 @@ public partial class MainViewModel : ObservableObject
     private double _windowHeight;
 
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
-        OcrService ocrService, AdjustDialogService adjustDialogService, AppSettingsService settingsService,
-        AppSettings settings, string cardFolder)
+        OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
+        ImageSaveService imageSaveService, AppSettingsService settingsService, AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
         _compositionService = compositionService;
         _ocrService = ocrService;
         _adjustDialogService = adjustDialogService;
+        _saveFileDialogService = saveFileDialogService;
+        _imageSaveService = imageSaveService;
 
         _titleState = new TextElementState
         {
@@ -221,6 +225,22 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AdjustDescription() =>
         OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+
+    /// <summary>
+    /// プレビュー(①～④を合成した完成画像)を保存先を選んでPNGとして保存する
+    /// </summary>
+    [RelayCommand]
+    private void SaveImage()
+    {
+        if (PreviewImage is null || SelectedCard is null)
+            return;
+
+        var filePath = _saveFileDialogService.ShowSavePngDialog($"{SelectedCard.DisplayName}.png");
+        if (filePath is null)
+            return;
+
+        _imageSaveService.SaveAsPng(PreviewImage, filePath);
+    }
 
     // 範囲選択が無い場合は共通設定(IsCommonSetting)、ある場合はその区間の個別上書きを編集する。
     // 各項目の変更はLostFocusのたびに即座にプレビューへ反映し(LiveChanged)、

@@ -35,7 +35,10 @@ public partial class App : Application
         var compositionService = new CardCompositionService();
         var ocrService = new OcrService();
         var adjustDialogService = new AdjustDialogService();
-        _viewModel = new MainViewModel(cardFolderService, compositionService, ocrService, adjustDialogService, _settingsService, appSettings, cardFolder);
+        var saveFileDialogService = new SaveFileDialogService();
+        var imageSaveService = new ImageSaveService();
+        _viewModel = new MainViewModel(cardFolderService, compositionService, ocrService, adjustDialogService,
+            saveFileDialogService, imageSaveService, _settingsService, appSettings, cardFolder);
 
         _autoSaveTimer = new DispatcherTimer { Interval = AutoSaveInterval };
         _autoSaveTimer.Tick += (_, _) => _viewModel.SaveSettingsIfDirty();
