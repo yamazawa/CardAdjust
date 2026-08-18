@@ -19,7 +19,9 @@ public class OcrService
             return string.Empty;
 
         var result = await engine.RecognizeAsync(softwareBitmap);
-        return result.Text;
+
+        // OcrResult.Textは行区切りの挙動が不明瞭なため、Linesから明示的に\nで連結する。
+        return string.Join('\n', result.Lines.Select(line => line.Text));
     }
 
     // WPFのBitmapSourceはWindows.Media.Ocrに直接渡せないため、
