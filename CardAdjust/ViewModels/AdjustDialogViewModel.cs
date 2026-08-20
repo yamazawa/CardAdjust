@@ -30,6 +30,9 @@ public partial class AdjustDialogViewModel : ObservableObject
     private double _letterSpacing;
 
     [ObservableProperty]
+    private bool _isBold;
+
+    [ObservableProperty]
     private double _lineSpacing;
 
     public bool WasCanceled { get; private set; }
@@ -40,12 +43,13 @@ public partial class AdjustDialogViewModel : ObservableObject
 
     public event Action? ClearRequested;
 
-    public AdjustDialogViewModel(string fontFamilyName, double fontSize, double letterSpacing, double lineSpacing,
+    public AdjustDialogViewModel(string fontFamilyName, double fontSize, double letterSpacing, bool isBold, double lineSpacing,
         bool showLineSpacing, bool isCommonSetting, string targetLabel)
     {
         _fontFamilyName = fontFamilyName;
         _fontSize = fontSize;
         _letterSpacing = letterSpacing;
+        _isBold = isBold;
         _lineSpacing = lineSpacing;
         ShowLineSpacing = showLineSpacing;
         IsCommonSetting = isCommonSetting;
@@ -57,6 +61,8 @@ public partial class AdjustDialogViewModel : ObservableObject
     partial void OnFontSizeChanged(double value) => LiveChanged?.Invoke();
 
     partial void OnLetterSpacingChanged(double value) => LiveChanged?.Invoke();
+
+    partial void OnIsBoldChanged(bool value) => LiveChanged?.Invoke();
 
     partial void OnLineSpacingChanged(double value) => LiveChanged?.Invoke();
 

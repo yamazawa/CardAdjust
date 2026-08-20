@@ -196,6 +196,15 @@ namespace CardAdjust.Resources {
         }
 
         /// <summary>
+        ///   太字 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_Bold {
+            get {
+                return ResourceManager.GetString("Label_Bold", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   行間隔 に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Label_LineSpacing {

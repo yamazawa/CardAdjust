@@ -9,15 +9,15 @@ namespace CardAdjust.Services;
 public static class CharacterStyleBuilder
 {
     public static IReadOnlyList<CharacterStyle> Build(string text, FontFamily defaultFontFamily, double defaultFontSize,
-        double defaultLetterSpacing, IReadOnlyList<CharacterStyleOverride> overrides)
+        double defaultLetterSpacing, bool defaultIsBold, IReadOnlyList<CharacterStyleOverride> overrides)
     {
         var styles = new CharacterStyle[text.Length];
         for (var i = 0; i < text.Length; i++)
         {
             var matched = overrides.FirstOrDefault(o => i >= o.Start && i < o.Start + o.Length);
             styles[i] = matched is null
-                ? new CharacterStyle(text[i], defaultFontFamily, defaultFontSize, defaultLetterSpacing)
-                : new CharacterStyle(text[i], new FontFamily(matched.FontFamilyName), matched.FontSize, matched.LetterSpacing);
+                ? new CharacterStyle(text[i], defaultFontFamily, defaultFontSize, defaultLetterSpacing, defaultIsBold)
+                : new CharacterStyle(text[i], new FontFamily(matched.FontFamilyName), matched.FontSize, matched.LetterSpacing, matched.IsBold);
         }
 
         return styles;

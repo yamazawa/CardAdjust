@@ -5,4 +5,4 @@ namespace CardAdjust.Models;
 ///
 /// 個別調整ダイアログの「クリア」で、対象区間の上書きを削除して統一設定に戻す。
 /// </summary>
-public sealed record CharacterStyleOverride(int Start, int Length, string FontFamilyName, double FontSize, double LetterSpacing);
+public sealed record CharacterStyleOverride(int Start, int Length, string FontFamilyName, double FontSize, double LetterSpacing, bool IsBold);

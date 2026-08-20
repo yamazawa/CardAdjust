@@ -103,6 +103,9 @@
   <data name="Label_LetterSpacing" xml:space="preserve">
     <value>文字間隔</value>
   </data>
+  <data name="Label_Bold" xml:space="preserve">
+    <value>太字</value>
+  </data>
   <data name="Label_LineSpacing" xml:space="preserve">
     <value>行間隔</value>
   </data>

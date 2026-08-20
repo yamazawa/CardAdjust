@@ -92,7 +92,7 @@ public class CardTextRenderer
     }
 
     private static Typeface TypefaceFor(CharacterStyle style) =>
-        new(style.FontFamily, FontStyles.Normal, FontWeights.Normal, FontStretches.Normal);
+        new(style.FontFamily, FontStyles.Normal, style.IsBold ? FontWeights.Bold : FontWeights.Normal, FontStretches.Normal);
 
     private static FormattedText CreateFormattedText(string text, Typeface typeface, double fontSize, Brush foreground) =>
         new(text, CultureInfo.GetCultureInfo("ja-JP"), FlowDirection.LeftToRight, typeface, fontSize, foreground, 1.0);

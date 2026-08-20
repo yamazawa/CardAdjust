@@ -151,12 +151,14 @@ public partial class MainViewModel : ObservableObject
             FontFamilyName = settings.TitleFontFamily,
             FontSize = settings.TitleFontSize,
             LetterSpacing = settings.TitleLetterSpacing,
+            IsBold = settings.TitleBold,
         };
         _descriptionState = new TextElementState
         {
             FontFamilyName = settings.DescriptionFontFamily,
             FontSize = settings.DescriptionFontSize,
             LetterSpacing = settings.DescriptionLetterSpacing,
+            IsBold = settings.DescriptionBold,
             LineSpacing = settings.DescriptionLineSpacing,
         };
 
@@ -271,8 +273,8 @@ public partial class MainViewModel : ObservableObject
         // 一斉出力の対象には選択中カードの未保存の変更も含めるため、先に確定させる。
         SaveLayoutIfDirty();
 
-        var titleStyle = new CommonTextStyle(_titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing);
-        var descriptionStyle = new CommonTextStyle(_descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing);
+        var titleStyle = new CommonTextStyle(_titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold);
+        var descriptionStyle = new CommonTextStyle(_descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.IsBold);
         _batchExportService.ExportAll(CardList, BatchExportFolder, _frameTemplate, titleStyle, descriptionStyle, _descriptionState.LineSpacing);
     }
 
@@ -291,12 +293,14 @@ public partial class MainViewModel : ObservableObject
             existing?.FontFamilyName ?? state.FontFamilyName,
             existing?.FontSize ?? state.FontSize,
             existing?.LetterSpacing ?? state.LetterSpacing,
+            existing?.IsBold ?? state.IsBold,
             state.LineSpacing,
             showLineSpacing, isCommon, targetLabel);
 
         var snapshotFontFamilyName = state.FontFamilyName;
         var snapshotFontSize = state.FontSize;
         var snapshotLetterSpacing = state.LetterSpacing;
+        var snapshotIsBold = state.IsBold;
         var snapshotLineSpacing = state.LineSpacing;
         var snapshotOverrides = state.Overrides.ToList();
 
@@ -306,7 +310,7 @@ public partial class MainViewModel : ObservableObject
         _adjustDialogService.ShowModal(viewModel);
 
         if (viewModel.WasCanceled)
-            RevertAdjust(state, snapshotFontFamilyName, snapshotFontSize, snapshotLetterSpacing, snapshotLineSpacing, snapshotOverrides);
+            RevertAdjust(state, snapshotFontFamilyName, snapshotFontSize, snapshotLetterSpacing, snapshotIsBold, snapshotLineSpacing, snapshotOverrides);
 
         // 個別上書き(文字区間ごとのOverrides)はカードごとの保存対象のため、
         // 共通/個別いずれの変更でも(取り消し後の確定値を含めて)レイアウト保存をマークする。
@@ -324,11 +328,12 @@ public partial class MainViewModel : ObservableObject
             state.FontFamilyName = viewModel.FontFamilyName;
             state.FontSize = viewModel.FontSize;
             state.LetterSpacing = viewModel.LetterSpacing;
+            state.IsBold = viewModel.IsBold;
         }
         else
         {
             state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
-            state.Overrides.Add(new CharacterStyleOverride(start, length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing));
+            state.Overrides.Add(new CharacterStyleOverride(start, length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing, viewModel.IsBold));
         }
 
         MarkSettingsDirty();
@@ -336,11 +341,12 @@ public partial class MainViewModel : ObservableObject
     }
 
     private static void RevertAdjust(TextElementState state, string fontFamilyName, double fontSize, double letterSpacing,
-        double lineSpacing, List<CharacterStyleOverride> overrides)
+        bool isBold, double lineSpacing, List<CharacterStyleOverride> overrides)
     {
         state.FontFamilyName = fontFamilyName;
         state.FontSize = fontSize;
         state.LetterSpacing = letterSpacing;
+        state.IsBold = isBold;
         state.LineSpacing = lineSpacing;
         state.Overrides.Clear();
         state.Overrides.AddRange(overrides);
@@ -483,8 +489,8 @@ public partial class MainViewModel : ObservableObject
 
         _settingsDirty = false;
         _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
-            _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing,
-            _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing,
+            _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold,
+            _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing, _descriptionState.IsBold,
             BatchExportFolder));
     }
 
@@ -512,9 +518,9 @@ public partial class MainViewModel : ObservableObject
     private void RecomposePreview()
     {
         var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleState.FontFamilyName),
-            _titleState.FontSize, _titleState.LetterSpacing, _titleState.Overrides);
+            _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold, _titleState.Overrides);
         var descriptionStyles = CharacterStyleBuilder.Build(DescriptionText, new FontFamily(_descriptionState.FontFamilyName),
-            _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.Overrides);
+            _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.IsBold, _descriptionState.Overrides);
 
         var request = new CardCompositionRequest
         {
@@ -537,6 +543,7 @@ public partial class MainViewModel : ObservableObject
         public required string FontFamilyName { get; set; }
         public required double FontSize { get; set; }
         public required double LetterSpacing { get; set; }
+        public bool IsBold { get; set; }
         public double LineSpacing { get; set; }
         public List<CharacterStyleOverride> Overrides { get; } = [];
     }

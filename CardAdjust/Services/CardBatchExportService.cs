@@ -55,12 +55,12 @@ public class CardBatchExportService
             FrameTemplate = frameTemplate,
             TitleText = titleText,
             TitleCharacterStyles = CharacterStyleBuilder.Build(titleText, new FontFamily(titleStyle.FontFamilyName),
-                titleStyle.FontSize, titleStyle.LetterSpacing, layout?.TitleOverrides ?? []),
+                titleStyle.FontSize, titleStyle.LetterSpacing, titleStyle.IsBold, layout?.TitleOverrides ?? []),
             IllustrationImage = CropIllustration(card, layout),
             KeepIllustrationAspectRatio = layout?.KeepIllustrationAspectRatio ?? false,
             DescriptionText = descriptionText,
             DescriptionCharacterStyles = CharacterStyleBuilder.Build(descriptionText, new FontFamily(descriptionStyle.FontFamilyName),
-                descriptionStyle.FontSize, descriptionStyle.LetterSpacing, layout?.DescriptionOverrides ?? []),
+                descriptionStyle.FontSize, descriptionStyle.LetterSpacing, descriptionStyle.IsBold, layout?.DescriptionOverrides ?? []),
             DescriptionLineSpacing = descriptionLineSpacing,
         };
     }
