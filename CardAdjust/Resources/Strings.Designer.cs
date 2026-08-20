@@ -248,5 +248,23 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("Button_Save", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   出力先フォルダ に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_BatchExportFolder {
+            get {
+                return ResourceManager.GetString("Label_BatchExportFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   一斉出力 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Button_BatchExport {
+            get {
+                return ResourceManager.GetString("Button_BatchExport", resourceCulture);
+            }
+        }
     }
 }

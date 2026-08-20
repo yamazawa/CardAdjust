@@ -24,6 +24,7 @@ public partial class MainViewModel : ObservableObject
     private readonly AdjustDialogService _adjustDialogService;
     private readonly SaveFileDialogService _saveFileDialogService;
     private readonly ImageSaveService _imageSaveService;
+    private readonly CardBatchExportService _batchExportService;
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
     private bool _layoutDirty;
@@ -127,10 +128,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _windowHeight;
 
+    // 一斉出力の出力先フォルダパス。次回起動時も保持する。
+    [ObservableProperty]
+    private string _batchExportFolder;
+
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
         ImageSaveService imageSaveService, AppSettingsService settingsService, CardLayoutService layoutService,
-        AppSettings settings, string cardFolder)
+        CardBatchExportService batchExportService, AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
         _layoutService = layoutService;
@@ -139,6 +144,7 @@ public partial class MainViewModel : ObservableObject
         _adjustDialogService = adjustDialogService;
         _saveFileDialogService = saveFileDialogService;
         _imageSaveService = imageSaveService;
+        _batchExportService = batchExportService;
 
         _titleState = new TextElementState
         {
@@ -158,6 +164,7 @@ public partial class MainViewModel : ObservableObject
         // プロパティではなくフィールドへ直接代入する。
         _windowWidth = settings.WindowWidth;
         _windowHeight = settings.WindowHeight;
+        _batchExportFolder = settings.BatchExportFolder;
 
         // OnSelectedCardChangedがRecomposePreviewを呼ぶ可能性があるため、
         // カード一覧の読み込みより先にフレームテンプレートを読み込んでおく。
@@ -252,6 +259,23 @@ public partial class MainViewModel : ObservableObject
         _imageSaveService.SaveAsPng(PreviewImage, filePath);
     }
 
+    /// <summary>
+    /// カード一覧の全カードのプレビュー画像を、出力先フォルダへ一斉にPNG保存する
+    /// </summary>
+    [RelayCommand]
+    private void BatchExport()
+    {
+        if (string.IsNullOrWhiteSpace(BatchExportFolder))
+            return;
+
+        // 一斉出力の対象には選択中カードの未保存の変更も含めるため、先に確定させる。
+        SaveLayoutIfDirty();
+
+        var titleStyle = new CommonTextStyle(_titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing);
+        var descriptionStyle = new CommonTextStyle(_descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing);
+        _batchExportService.ExportAll(CardList, BatchExportFolder, _frameTemplate, titleStyle, descriptionStyle, _descriptionState.LineSpacing);
+    }
+
     // 範囲選択が無い場合は共通設定(IsCommonSetting)、ある場合はその区間の個別上書きを編集する。
     // 各項目の変更はLostFocusのたびに即座にプレビューへ反映し(LiveChanged)、
     // キャンセル時はダイアログを開いた時点の状態に戻す。
@@ -331,7 +355,7 @@ public partial class MainViewModel : ObservableObject
         SaveLayoutIfDirty(_previousCardFilePath);
         _previousCardFilePath = value?.FilePath;
 
-        SourceImage = value is null ? null : LoadImage(value.FilePath);
+        SourceImage = value is null ? null : SourceImageLoader.Load(value.FilePath);
         var layout = value is null ? null : _layoutService.TryGet(value.FilePath);
 
         // 復元自体はユーザー操作による変更ではないため、MarkLayoutDirtyを抑制する。
@@ -439,6 +463,8 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnWindowHeightChanged(double value) => MarkSettingsDirty();
 
+    partial void OnBatchExportFolderChanged(string value) => MarkSettingsDirty();
+
     private void MarkSettingsDirty() => _settingsDirty = true;
 
     private void MarkLayoutDirty()
@@ -458,7 +484,8 @@ public partial class MainViewModel : ObservableObject
         _settingsDirty = false;
         _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
             _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing,
-            _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing));
+            _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing,
+            BatchExportFolder));
     }
 
     /// <summary>
@@ -502,17 +529,6 @@ public partial class MainViewModel : ObservableObject
         };
 
         PreviewImage = _compositionService.Compose(request);
-    }
-
-    private static BitmapImage LoadImage(string filePath)
-    {
-        var image = new BitmapImage();
-        image.BeginInit();
-        image.CacheOption = BitmapCacheOption.OnLoad;
-        image.UriSource = new Uri(filePath);
-        image.EndInit();
-        image.Freeze();
-        return image;
     }
 
     // ②タイトル・④説明文それぞれの、統一設定(共通設定)と文字区間ごとの個別上書きを保持する。

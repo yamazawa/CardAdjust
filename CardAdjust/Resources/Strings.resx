@@ -121,4 +121,10 @@
   <data name="Button_Save" xml:space="preserve">
     <value>保存</value>
   </data>
+  <data name="Label_BatchExportFolder" xml:space="preserve">
+    <value>出力先フォルダ</value>
+  </data>
+  <data name="Button_BatchExport" xml:space="preserve">
+    <value>一斉出力</value>
+  </data>
 </root>

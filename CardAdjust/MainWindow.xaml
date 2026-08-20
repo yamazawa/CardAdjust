@@ -21,6 +21,10 @@
     <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}"
           Background="Transparent"
           behaviors:ClearFocusOnClickBehavior.IsEnabled="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -28,8 +32,19 @@
             <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
 
+        <!-- 一斉出力。カード一覧の全カードを、指定フォルダへPNGとして一斉に出力する。 -->
+        <DockPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="4"
+                   Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+            <Button DockPanel.Dock="Right" Content="{x:Static resx:Strings.Button_BatchExport}"
+                    Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
+                    Command="{Binding BatchExportCommand}" />
+            <TextBlock DockPanel.Dock="Left" Text="{x:Static resx:Strings.Label_BatchExportFolder}"
+                       VerticalAlignment="Center" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
+            <TextBox Text="{Binding BatchExportFolder}" VerticalContentAlignment="Center" />
+        </DockPanel>
+
         <!-- カード一覧。フォルダ内の画像を選択してプレビュー対象を切り替える。 -->
-        <DockPanel Grid.Column="0" Width="{x:Static styles:LayoutConstants.CardListWidth}"
+        <DockPanel Grid.Row="1" Grid.Column="0" Width="{x:Static styles:LayoutConstants.CardListWidth}"
                    Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_CardList}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
@@ -38,7 +53,7 @@
         </DockPanel>
 
         <!-- 元画像。選択中カードの生画像に、②③④の読取矩形をドラッグ可能な状態で重ねて表示する。 -->
-        <DockPanel Grid.Column="1" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+        <DockPanel Grid.Row="1" Grid.Column="1" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_SourceImage}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <Viewbox Stretch="Uniform">
@@ -89,7 +104,7 @@
         </DockPanel>
 
         <!-- プレビュー。①外枠～④説明文を合成した完成イメージを表示する。 -->
-        <DockPanel Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
+        <DockPanel Grid.Row="1" Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_Preview}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <Button DockPanel.Dock="Bottom" Content="{x:Static resx:Strings.Button_Save}"
@@ -99,7 +114,7 @@
         </DockPanel>
 
         <!-- 要素操作。②③④それぞれの読取・調整ボタンとテキストボックスを並べる。 -->
-        <StackPanel Grid.Column="3" Width="{x:Static styles:LayoutConstants.ElementPanelWidth}"
+        <StackPanel Grid.Row="1" Grid.Column="3" Width="{x:Static styles:LayoutConstants.ElementPanelWidth}"
                     Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <StackPanel Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
                 <TextBlock Text="{x:Static resx:Strings.Label_Title}"
