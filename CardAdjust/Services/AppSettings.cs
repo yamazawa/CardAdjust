@@ -15,4 +15,5 @@ public sealed record AppSettings(
     string DescriptionFontFamily = "Yu Gothic UI",
     double DescriptionFontSize = 28,
     double DescriptionLetterSpacing = 2,
-    double DescriptionLineSpacing = 10);
+    double DescriptionLineSpacing = 10,
+    string BatchExportFolder = "");

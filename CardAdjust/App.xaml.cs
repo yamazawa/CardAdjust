@@ -38,8 +38,9 @@ public partial class App : Application
         var saveFileDialogService = new SaveFileDialogService();
         var imageSaveService = new ImageSaveService();
         var layoutService = new CardLayoutService();
+        var batchExportService = new CardBatchExportService(layoutService, compositionService, imageSaveService);
         _viewModel = new MainViewModel(cardFolderService, compositionService, ocrService, adjustDialogService,
-            saveFileDialogService, imageSaveService, _settingsService, layoutService, appSettings, cardFolder);
+            saveFileDialogService, imageSaveService, _settingsService, layoutService, batchExportService, appSettings, cardFolder);
 
         _autoSaveTimer = new DispatcherTimer { Interval = AutoSaveInterval };
         _autoSaveTimer.Tick += (_, _) =>
