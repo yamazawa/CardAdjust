@@ -64,6 +64,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _titleSelectionLength;
 
+    // ②タイトルの個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。
+    [ObservableProperty]
+    private IReadOnlyList<OverrideSummary> _titleOverrideSummaries = [];
+
     // ②タイトルの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
     private double _titleRegionX = CardTemplateLayout.TitleX;
@@ -108,6 +112,10 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private int _descriptionSelectionLength;
+
+    // ④説明文の個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。
+    [ObservableProperty]
+    private IReadOnlyList<OverrideSummary> _descriptionOverrideSummaries = [];
 
     // ④説明文の読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
@@ -210,6 +218,18 @@ public partial class MainViewModel : ObservableObject
     private void AdjustTitle() => OpenAdjustDialog(TitleText, TitleSelectionStart, TitleSelectionLength, _titleState, showLineSpacing: false);
 
     /// <summary>
+    /// 個別設定一覧の番号から、対象のOverridesを直接編集する
+    /// </summary>
+    [RelayCommand]
+    private void AdjustTitleOverride(OverrideSummary? summary)
+    {
+        if (summary is null)
+            return;
+
+        OpenAdjustDialog(TitleText, summary.Override.Start, summary.Override.Length, _titleState, showLineSpacing: false);
+    }
+
+    /// <summary>
     /// イラスト領域を矩形で切り抜き、表示矩形に貼り付ける
     /// </summary>
     [RelayCommand]
@@ -249,6 +269,18 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void AdjustDescription() =>
         OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+
+    /// <summary>
+    /// 個別設定一覧の番号から、対象のOverridesを直接編集する
+    /// </summary>
+    [RelayCommand]
+    private void AdjustDescriptionOverride(OverrideSummary? summary)
+    {
+        if (summary is null)
+            return;
+
+        OpenAdjustDialog(DescriptionText, summary.Override.Start, summary.Override.Length, _descriptionState, showLineSpacing: true);
+    }
 
     /// <summary>
     /// ①～④を合成した完成画像を保存先を選んでPNGとして保存する
@@ -295,16 +327,15 @@ public partial class MainViewModel : ObservableObject
         var isCommon = selectionLength <= 0;
         var start = isCommon ? 0 : selectionStart;
         var length = isCommon ? 0 : selectionLength;
-        var targetLabel = isCommon ? Strings.Label_CommonSetting : text.Substring(start, length);
         var existing = isCommon ? null : state.Overrides.FirstOrDefault(o => o.Start == start && o.Length == length);
 
-        var viewModel = new AdjustDialogViewModel(
+        var viewModel = new AdjustDialogViewModel(text,
             existing?.FontFamilyName ?? state.FontFamilyName,
             existing?.FontSize ?? state.FontSize,
             existing?.LetterSpacing ?? state.LetterSpacing,
             existing?.IsBold ?? state.IsBold,
             state.LineSpacing,
-            showLineSpacing, isCommon, targetLabel);
+            showLineSpacing, isCommon, start, length);
 
         var snapshotFontFamilyName = state.FontFamilyName;
         var snapshotFontSize = state.FontSize;
@@ -313,8 +344,12 @@ public partial class MainViewModel : ObservableObject
         var snapshotLineSpacing = state.LineSpacing;
         var snapshotOverrides = state.Overrides.ToList();
 
-        viewModel.LiveChanged += () => ApplyAdjustLive(state, isCommon, start, length, viewModel);
-        viewModel.ClearRequested += () => state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
+        // 個別設定はダイアログ内で開始位置・文字数(範囲)自体も変更できるため、
+        // 「現在この区間に対応するOverridesの位置」を保持し、範囲変更のたびに追従させる。
+        var range = new RangeTracker(start, length);
+
+        viewModel.LiveChanged += () => ApplyAdjustLive(state, isCommon, range, viewModel);
+        viewModel.ClearRequested += () => state.Overrides.RemoveAll(o => RangesOverlap(o, range.Start, range.Length));
 
         _adjustDialogService.ShowModal(viewModel);
 
@@ -328,7 +363,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     // 行間隔は文字区間の概念に馴染まないため、共通/個別どちらのモードでも常にstate全体へ反映する。
-    private void ApplyAdjustLive(TextElementState state, bool isCommon, int start, int length, AdjustDialogViewModel viewModel)
+    private void ApplyAdjustLive(TextElementState state, bool isCommon, RangeTracker range, AdjustDialogViewModel viewModel)
     {
         state.LineSpacing = viewModel.LineSpacing;
 
@@ -341,8 +376,11 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
-            state.Overrides.Add(new CharacterStyleOverride(start, length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing, viewModel.IsBold));
+            // 直前の位置にあったOverridesを取り除いてから、ダイアログ側の最新の開始位置・文字数で追加し直す。
+            state.Overrides.RemoveAll(o => RangesOverlap(o, range.Start, range.Length));
+            range.Start = viewModel.Start;
+            range.Length = viewModel.Length;
+            state.Overrides.Add(new CharacterStyleOverride(range.Start, range.Length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing, viewModel.IsBold));
         }
 
         MarkSettingsDirty();
@@ -532,7 +570,11 @@ public partial class MainViewModel : ObservableObject
 
     // プレビューではHighlightOverridesEnabledに応じて個別調整による上書きを色分け表示する。
     // 保存・一斉出力では色分け表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
-    private void RecomposePreview() => PreviewImage = _compositionService.Compose(BuildCompositionRequest(HighlightOverridesEnabled));
+    private void RecomposePreview()
+    {
+        RefreshOverrideSummaries();
+        PreviewImage = _compositionService.Compose(BuildCompositionRequest(HighlightOverridesEnabled));
+    }
 
     private CardCompositionRequest BuildCompositionRequest(bool highlightOverrides)
     {
@@ -546,13 +588,34 @@ public partial class MainViewModel : ObservableObject
             FrameTemplate = _frameTemplate,
             TitleText = TitleText,
             TitleCharacterStyles = titleStyles,
+            TitleOverrides = _titleState.Overrides,
             IllustrationImage = IllustrationImage,
             KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
             DescriptionText = DescriptionText,
             DescriptionCharacterStyles = descriptionStyles,
+            DescriptionOverrides = _descriptionState.Overrides,
             DescriptionLineSpacing = _descriptionState.LineSpacing,
             HighlightOverrides = highlightOverrides,
         };
+    }
+
+    // 個別設定一覧(番号付き)を、プレビュー上の番号付き矩形と同じ順序(開始位置順)で組み立てる。
+    private void RefreshOverrideSummaries()
+    {
+        TitleOverrideSummaries = BuildOverrideSummaries(TitleText, _titleState.Overrides);
+        DescriptionOverrideSummaries = BuildOverrideSummaries(DescriptionText, _descriptionState.Overrides);
+    }
+
+    private static IReadOnlyList<OverrideSummary> BuildOverrideSummaries(string text, IReadOnlyList<CharacterStyleOverride> overrides) =>
+        overrides.OrderBy(o => o.Start)
+            .Select((o, i) => new OverrideSummary(i + 1, BuildOverrideSummaryLabel(i + 1, text, o), o))
+            .ToList();
+
+    private static string BuildOverrideSummaryLabel(int number, string text, CharacterStyleOverride o)
+    {
+        var start = Math.Clamp(o.Start, 0, text.Length);
+        var length = Math.Clamp(o.Length, 0, text.Length - start);
+        return $"{number}: {text.Substring(start, length)}";
     }
 
     // ②タイトル・④説明文それぞれの、統一設定(共通設定)と文字区間ごとの個別上書きを保持する。
@@ -564,5 +627,13 @@ public partial class MainViewModel : ObservableObject
         public bool IsBold { get; set; }
         public double LineSpacing { get; set; }
         public List<CharacterStyleOverride> Overrides { get; } = [];
+    }
+
+    // 個別調整ダイアログを開いている間、対象のOverridesが現在どの区間にあるかを追跡する。
+    // ダイアログ側で開始位置・文字数(範囲)自体が変更された場合、この位置も追従させる。
+    private sealed class RangeTracker(int start, int length)
+    {
+        public int Start { get; set; } = start;
+        public int Length { get; set; } = length;
     }
 }

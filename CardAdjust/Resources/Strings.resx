@@ -106,6 +106,12 @@
   <data name="Label_Bold" xml:space="preserve">
     <value>太字</value>
   </data>
+  <data name="Label_RangeStart" xml:space="preserve">
+    <value>開始位置</value>
+  </data>
+  <data name="Label_RangeLength" xml:space="preserve">
+    <value>文字数</value>
+  </data>
   <data name="Label_LineSpacing" xml:space="preserve">
     <value>行間隔</value>
   </data>

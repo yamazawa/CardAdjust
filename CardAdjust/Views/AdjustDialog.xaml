@@ -38,6 +38,14 @@
         <CheckBox Content="{x:Static resx:Strings.Label_Bold}" IsChecked="{Binding IsBold}"
                   Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
 
+        <StackPanel Visibility="{Binding ShowRange, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <TextBlock Text="{x:Static resx:Strings.Label_RangeStart}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <TextBox Text="{Binding Start}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+
+            <TextBlock Text="{x:Static resx:Strings.Label_RangeLength}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <TextBox Text="{Binding Length}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+        </StackPanel>
+
         <StackPanel Visibility="{Binding ShowLineSpacing, Converter={StaticResource BooleanToVisibilityConverter}}">
             <TextBlock Text="{x:Static resx:Strings.Label_LineSpacing}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <TextBox Text="{Binding LineSpacing}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />

@@ -135,6 +135,20 @@
                             Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                             Command="{Binding AdjustTitleCommand}" />
                 </StackPanel>
+                <!-- 個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。 -->
+                <ItemsControl ItemsSource="{Binding TitleOverrideSummaries}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
+                                           Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
+                                <Button Content="{x:Static resx:Strings.Button_Adjust}"
+                                        Command="{Binding DataContext.AdjustTitleOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
 
             <StackPanel Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
@@ -176,6 +190,20 @@
                             Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                             Command="{Binding AdjustDescriptionCommand}" />
                 </StackPanel>
+                <!-- 個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。 -->
+                <ItemsControl ItemsSource="{Binding DescriptionOverrideSummaries}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
+                                           Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
+                                <Button Content="{x:Static resx:Strings.Button_Adjust}"
+                                        Command="{Binding DataContext.AdjustDescriptionOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                        CommandParameter="{Binding}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
         </StackPanel>
     </Grid>
