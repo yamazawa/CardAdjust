@@ -275,5 +275,14 @@ namespace CardAdjust.Resources {
                 return ResourceManager.GetString("Button_BatchExport", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   個別設定を色分け表示 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_HighlightOverrides {
+            get {
+                return ResourceManager.GetString("Label_HighlightOverrides", resourceCulture);
+            }
+        }
     }
 }

@@ -107,6 +107,9 @@
         <DockPanel Grid.Row="1" Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_Preview}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <CheckBox DockPanel.Dock="Top" Content="{x:Static resx:Strings.Label_HighlightOverrides}"
+                      IsChecked="{Binding HighlightOverridesEnabled}"
+                      Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <Button DockPanel.Dock="Bottom" Content="{x:Static resx:Strings.Button_Save}"
                     HorizontalAlignment="Right" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                     Command="{Binding SaveImageCommand}" />
