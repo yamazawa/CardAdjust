@@ -33,11 +33,12 @@ public class CardTextRenderer
         var lineHeight = glyphs.Max(g => g.Height);
 
         var x = rect.X + (rect.Width - totalWidth) / 2;
-        var y = rect.Y + (rect.Height - lineHeight) / 2;
+        var top = rect.Y + (rect.Height - lineHeight) / 2;
 
+        // フォントサイズが文字ごとに異なっても下端が揃うよう、行の下端を基準に配置する。
         for (var i = 0; i < glyphs.Count; i++)
         {
-            context.DrawText(glyphs[i], new Point(x, y));
+            context.DrawText(glyphs[i], new Point(x, top + (lineHeight - glyphs[i].Height)));
             x += glyphs[i].Width + styles[i].LetterSpacing;
         }
     }
@@ -67,19 +68,21 @@ public class CardTextRenderer
             if (lines[i].RawText == DividerLineText)
                 DrawDivider(context, rect, y + lineHeights[i] / 2, foreground);
             else
-                DrawLine(context, lines[i].Styles, rect.X, y, foreground);
+                DrawLine(context, lines[i].Styles, rect.X, y, lineHeights[i], foreground);
 
             y += lineHeights[i] + lineSpacing;
         }
     }
 
-    private static void DrawLine(DrawingContext context, IReadOnlyList<CharacterStyle> lineStyles, double startX, double y, Brush foreground)
+    // フォントサイズが文字ごとに異なっても下端が揃うよう、行の下端(lineTop + lineHeight)を基準に配置する。
+    private static void DrawLine(DrawingContext context, IReadOnlyList<CharacterStyle> lineStyles, double startX, double lineTop,
+        double lineHeight, Brush foreground)
     {
         var x = startX;
         foreach (var style in lineStyles)
         {
             var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, foreground);
-            context.DrawText(glyph, new Point(x, y));
+            context.DrawText(glyph, new Point(x, lineTop + (lineHeight - glyph.Height)));
             x += glyph.Width + style.LetterSpacing;
         }
     }
