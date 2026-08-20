@@ -18,6 +18,7 @@ namespace CardAdjust.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly AppSettingsService _settingsService;
+    private readonly CardLayoutService _layoutService;
     private readonly CardCompositionService _compositionService;
     private readonly OcrService _ocrService;
     private readonly AdjustDialogService _adjustDialogService;
@@ -25,6 +26,13 @@ public partial class MainViewModel : ObservableObject
     private readonly ImageSaveService _imageSaveService;
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
+    private bool _layoutDirty;
+
+    // カード切り替え時、直前のカードのレイアウトを保存するために保持する。
+    private string? _previousCardFilePath;
+
+    // カードの読込・復元中はユーザー操作ではないため、MarkLayoutDirtyを抑制するためのガード。
+    private bool _isRestoringLayout;
 
     // ②タイトル・④説明文の統一レイアウト設定＋文字区間ごとの個別上書き。互いに別に保持する。
     private readonly TextElementState _titleState;
@@ -121,9 +129,11 @@ public partial class MainViewModel : ObservableObject
 
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
-        ImageSaveService imageSaveService, AppSettingsService settingsService, AppSettings settings, string cardFolder)
+        ImageSaveService imageSaveService, AppSettingsService settingsService, CardLayoutService layoutService,
+        AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
+        _layoutService = layoutService;
         _compositionService = compositionService;
         _ocrService = ocrService;
         _adjustDialogService = adjustDialogService;
@@ -274,6 +284,9 @@ public partial class MainViewModel : ObservableObject
         if (viewModel.WasCanceled)
             RevertAdjust(state, snapshotFontFamilyName, snapshotFontSize, snapshotLetterSpacing, snapshotLineSpacing, snapshotOverrides);
 
+        // 個別上書き(文字区間ごとのOverrides)はカードごとの保存対象のため、
+        // 共通/個別いずれの変更でも(取り消し後の確定値を含めて)レイアウト保存をマークする。
+        MarkLayoutDirty();
         RecomposePreview();
     }
 
@@ -314,39 +327,79 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnSelectedCardChanged(CardImage? value)
     {
+        // 直前のカードの未保存の変更を、切り替え前に確定させる。
+        SaveLayoutIfDirty(_previousCardFilePath);
+        _previousCardFilePath = value?.FilePath;
+
         SourceImage = value is null ? null : LoadImage(value.FilePath);
-        TitleText = string.Empty;
-        IllustrationImage = null;
-        DescriptionText = string.Empty;
+        var layout = value is null ? null : _layoutService.TryGet(value.FilePath);
 
-        // 読取矩形の位置・サイズもカードごとの編集セッションに属するため初期値へ戻す。
-        TitleRegionX = CardTemplateLayout.TitleX;
-        TitleRegionY = CardTemplateLayout.TitleY;
-        TitleRegionWidth = CardTemplateLayout.TitleWidth;
-        TitleRegionHeight = CardTemplateLayout.TitleHeight;
-        IllustrationRegionX = CardTemplateLayout.IllustrationX;
-        IllustrationRegionY = CardTemplateLayout.IllustrationY;
-        IllustrationRegionWidth = CardTemplateLayout.IllustrationWidth;
-        IllustrationRegionHeight = CardTemplateLayout.IllustrationHeight;
-        DescriptionRegionX = CardTemplateLayout.DescriptionX;
-        DescriptionRegionY = CardTemplateLayout.DescriptionY;
-        DescriptionRegionWidth = CardTemplateLayout.DescriptionWidth;
-        DescriptionRegionHeight = CardTemplateLayout.DescriptionHeight;
+        // 復元自体はユーザー操作による変更ではないため、MarkLayoutDirtyを抑制する。
+        _isRestoringLayout = true;
+        RestoreTextAndAspect(layout);
+        RestoreRegions(layout);
+        RestoreOverrides(layout);
+        _isRestoringLayout = false;
 
-        // 文字区間ごとの個別上書きはカードごとの編集セッションに属するためクリアする。
-        // 共通設定(フォント・サイズ・間隔)はアプリ全体の設定なので維持する。
-        _titleState.Overrides.Clear();
-        _descriptionState.Overrides.Clear();
+        // イラストは矩形のみ保存対象のため、保存済みレイアウトがある場合のみ元画像から再取得する。
+        IllustrationImage = layout is not null && SourceImage is not null
+            ? ImageCropper.Crop(SourceImage, new Rect(IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight))
+            : null;
+
+        RecomposePreview();
     }
 
-    partial void OnTitleTextChanged(string value) => RecomposePreview();
+    private void RestoreTextAndAspect(CardLayout? layout)
+    {
+        TitleText = layout?.TitleText ?? string.Empty;
+        DescriptionText = layout?.DescriptionText ?? string.Empty;
+        KeepIllustrationAspectRatio = layout?.KeepIllustrationAspectRatio ?? false;
+    }
+
+    private void RestoreRegions(CardLayout? layout)
+    {
+        TitleRegionX = layout?.TitleRegionX ?? CardTemplateLayout.TitleX;
+        TitleRegionY = layout?.TitleRegionY ?? CardTemplateLayout.TitleY;
+        TitleRegionWidth = layout?.TitleRegionWidth ?? CardTemplateLayout.TitleWidth;
+        TitleRegionHeight = layout?.TitleRegionHeight ?? CardTemplateLayout.TitleHeight;
+        IllustrationRegionX = layout?.IllustrationRegionX ?? CardTemplateLayout.IllustrationX;
+        IllustrationRegionY = layout?.IllustrationRegionY ?? CardTemplateLayout.IllustrationY;
+        IllustrationRegionWidth = layout?.IllustrationRegionWidth ?? CardTemplateLayout.IllustrationWidth;
+        IllustrationRegionHeight = layout?.IllustrationRegionHeight ?? CardTemplateLayout.IllustrationHeight;
+        DescriptionRegionX = layout?.DescriptionRegionX ?? CardTemplateLayout.DescriptionX;
+        DescriptionRegionY = layout?.DescriptionRegionY ?? CardTemplateLayout.DescriptionY;
+        DescriptionRegionWidth = layout?.DescriptionRegionWidth ?? CardTemplateLayout.DescriptionWidth;
+        DescriptionRegionHeight = layout?.DescriptionRegionHeight ?? CardTemplateLayout.DescriptionHeight;
+    }
+
+    // 文字区間ごとの個別上書きも、SP2からはカードごとの保存対象になる。
+    // 共通設定(フォント・サイズ・間隔)はアプリ全体の設定なので維持する。
+    private void RestoreOverrides(CardLayout? layout)
+    {
+        _titleState.Overrides.Clear();
+        _titleState.Overrides.AddRange(layout?.TitleOverrides ?? []);
+        _descriptionState.Overrides.Clear();
+        _descriptionState.Overrides.AddRange(layout?.DescriptionOverrides ?? []);
+    }
+
+    partial void OnTitleTextChanged(string value)
+    {
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
 
     partial void OnIllustrationImageChanged(BitmapSource? value) => RecomposePreview();
 
-    partial void OnKeepIllustrationAspectRatioChanged(bool value) => RecomposePreview();
+    partial void OnKeepIllustrationAspectRatioChanged(bool value)
+    {
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
 
     partial void OnDescriptionTextChanged(string value)
     {
+        MarkLayoutDirty();
+
         // AcceptsReturn=TrueのTextBoxはEnter入力時に\r\nを挿入するため、
         // 個別調整の区間位置が\nのみの想定とずれないよう正規化する。
         if (value.Contains('\r'))
@@ -358,11 +411,41 @@ public partial class MainViewModel : ObservableObject
         RecomposePreview();
     }
 
+    partial void OnTitleRegionXChanged(double value) => MarkLayoutDirty();
+
+    partial void OnTitleRegionYChanged(double value) => MarkLayoutDirty();
+
+    partial void OnTitleRegionWidthChanged(double value) => MarkLayoutDirty();
+
+    partial void OnTitleRegionHeightChanged(double value) => MarkLayoutDirty();
+
+    partial void OnIllustrationRegionXChanged(double value) => MarkLayoutDirty();
+
+    partial void OnIllustrationRegionYChanged(double value) => MarkLayoutDirty();
+
+    partial void OnIllustrationRegionWidthChanged(double value) => MarkLayoutDirty();
+
+    partial void OnIllustrationRegionHeightChanged(double value) => MarkLayoutDirty();
+
+    partial void OnDescriptionRegionXChanged(double value) => MarkLayoutDirty();
+
+    partial void OnDescriptionRegionYChanged(double value) => MarkLayoutDirty();
+
+    partial void OnDescriptionRegionWidthChanged(double value) => MarkLayoutDirty();
+
+    partial void OnDescriptionRegionHeightChanged(double value) => MarkLayoutDirty();
+
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
 
     partial void OnWindowHeightChanged(double value) => MarkSettingsDirty();
 
     private void MarkSettingsDirty() => _settingsDirty = true;
+
+    private void MarkLayoutDirty()
+    {
+        if (!_isRestoringLayout)
+            _layoutDirty = true;
+    }
 
     /// <summary>
     /// ウィンドウサイズ・フォント設定に変更があれば設定を保存する
@@ -377,6 +460,27 @@ public partial class MainViewModel : ObservableObject
             _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing,
             _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing));
     }
+
+    /// <summary>
+    /// 選択中カードのレイアウトに変更があれば保存する
+    /// </summary>
+    public void SaveLayoutIfDirty() => SaveLayoutIfDirty(SelectedCard?.FilePath);
+
+    private void SaveLayoutIfDirty(string? filePath)
+    {
+        if (!_layoutDirty || filePath is null)
+            return;
+
+        _layoutDirty = false;
+        _layoutService.Save(filePath, BuildCurrentLayout());
+    }
+
+    private CardLayout BuildCurrentLayout() => new(
+        TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight,
+        IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight,
+        DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight,
+        TitleText, DescriptionText, KeepIllustrationAspectRatio,
+        _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
 
     private void RecomposePreview()
     {

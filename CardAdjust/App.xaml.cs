@@ -37,11 +37,16 @@ public partial class App : Application
         var adjustDialogService = new AdjustDialogService();
         var saveFileDialogService = new SaveFileDialogService();
         var imageSaveService = new ImageSaveService();
+        var layoutService = new CardLayoutService();
         _viewModel = new MainViewModel(cardFolderService, compositionService, ocrService, adjustDialogService,
-            saveFileDialogService, imageSaveService, _settingsService, appSettings, cardFolder);
+            saveFileDialogService, imageSaveService, _settingsService, layoutService, appSettings, cardFolder);
 
         _autoSaveTimer = new DispatcherTimer { Interval = AutoSaveInterval };
-        _autoSaveTimer.Tick += (_, _) => _viewModel.SaveSettingsIfDirty();
+        _autoSaveTimer.Tick += (_, _) =>
+        {
+            _viewModel.SaveSettingsIfDirty();
+            _viewModel.SaveLayoutIfDirty();
+        };
         _autoSaveTimer.Start();
 
         var mainWindow = new MainWindow { DataContext = _viewModel };
@@ -52,6 +57,7 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         _viewModel?.SaveSettingsIfDirty();
+        _viewModel?.SaveLayoutIfDirty();
         base.OnExit(e);
     }
 }
