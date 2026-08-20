@@ -246,19 +246,23 @@ public partial class MainViewModel : ObservableObject
         OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
 
     /// <summary>
-    /// プレビュー(①～④を合成した完成画像)を保存先を選んでPNGとして保存する
+    /// ①～④を合成した完成画像を保存先を選んでPNGとして保存する
+    ///
+    /// プレビュー画面の個別設定の色分け表示(HighlightOverrides)は、
+    /// 編集用の表示のため保存画像には反映しない。
     /// </summary>
     [RelayCommand]
     private void SaveImage()
     {
-        if (PreviewImage is null || SelectedCard is null)
+        if (SelectedCard is null)
             return;
 
         var filePath = _saveFileDialogService.ShowSavePngDialog($"{SelectedCard.DisplayName}.png");
         if (filePath is null)
             return;
 
-        _imageSaveService.SaveAsPng(PreviewImage, filePath);
+        var image = _compositionService.Compose(BuildCompositionRequest(highlightOverrides: false));
+        _imageSaveService.SaveAsPng(image, filePath);
     }
 
     /// <summary>
@@ -515,14 +519,18 @@ public partial class MainViewModel : ObservableObject
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
         _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
 
-    private void RecomposePreview()
+    // プレビューでは個別調整による上書きを色分け表示する(HighlightOverrides=true)。
+    // 保存・一斉出力では色分け表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
+    private void RecomposePreview() => PreviewImage = _compositionService.Compose(BuildCompositionRequest(highlightOverrides: true));
+
+    private CardCompositionRequest BuildCompositionRequest(bool highlightOverrides)
     {
         var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleState.FontFamilyName),
             _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold, _titleState.Overrides);
         var descriptionStyles = CharacterStyleBuilder.Build(DescriptionText, new FontFamily(_descriptionState.FontFamilyName),
             _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.IsBold, _descriptionState.Overrides);
 
-        var request = new CardCompositionRequest
+        return new CardCompositionRequest
         {
             FrameTemplate = _frameTemplate,
             TitleText = TitleText,
@@ -532,9 +540,8 @@ public partial class MainViewModel : ObservableObject
             DescriptionText = DescriptionText,
             DescriptionCharacterStyles = descriptionStyles,
             DescriptionLineSpacing = _descriptionState.LineSpacing,
+            HighlightOverrides = highlightOverrides,
         };
-
-        PreviewImage = _compositionService.Compose(request);
     }
 
     // ②タイトル・④説明文それぞれの、統一設定(共通設定)と文字区間ごとの個別上書きを保持する。

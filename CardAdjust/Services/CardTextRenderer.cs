@@ -17,17 +17,23 @@ public class CardTextRenderer
     private const string DividerLineText = "---";
     private const double DividerThickness = 3.0;
 
+    // 個別調整による上書きが適用されている文字を色分け表示する際の色(プレビュー専用)。
+    private static readonly Brush OverrideHighlightBrush = Brushes.Yellow;
+
     /// <summary>
     /// 1行のテキストを、指定した矩形内に水平・垂直共に中央揃えで描画する
     ///
     /// stylesはtextと同じ長さ(1文字につき1要素)で渡す。
+    /// highlightOverridesがtrueの場合、個別調整で上書きされている文字を色分け表示する。
     /// </summary>
-    public void DrawCenteredSingleLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect, Brush foreground)
+    public void DrawCenteredSingleLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
+        Brush foreground, bool highlightOverrides)
     {
         if (text.Length == 0)
             return;
 
-        var glyphs = text.Select((c, i) => CreateFormattedText(c.ToString(), TypefaceFor(styles[i]), styles[i].FontSize, foreground)).ToList();
+        var glyphs = text.Select((c, i) => CreateFormattedText(c.ToString(), TypefaceFor(styles[i]), styles[i].FontSize,
+            BrushFor(styles[i], foreground, highlightOverrides))).ToList();
         var spacingTotal = Enumerable.Range(0, glyphs.Count - 1).Sum(i => styles[i].LetterSpacing);
         var totalWidth = glyphs.Sum(g => g.Width) + spacingTotal;
         var lineHeight = glyphs.Max(g => g.Height);
@@ -49,9 +55,10 @@ public class CardTextRenderer
     /// 改行(\n)は描画せず、行の区切りとしてのみ扱う。stylesはtextと同じ長さで渡す
     /// (改行文字の位置にも要素は必要だが、その値は描画に使われない)。
     /// ある行が「---」そのものである場合、その行はテキストではなく水平線として描画する。
+    /// highlightOverridesがtrueの場合、個別調整で上書きされている文字を色分け表示する。
     /// </summary>
     public void DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
-        double lineSpacing, Brush foreground)
+        double lineSpacing, Brush foreground, bool highlightOverrides)
     {
         if (text.Length == 0)
             return;
@@ -68,7 +75,7 @@ public class CardTextRenderer
             if (lines[i].RawText == DividerLineText)
                 DrawDivider(context, rect, y + lineHeights[i] / 2, foreground);
             else
-                DrawLine(context, lines[i].Styles, rect.X, y, lineHeights[i], foreground);
+                DrawLine(context, lines[i].Styles, rect.X, y, lineHeights[i], foreground, highlightOverrides);
 
             y += lineHeights[i] + lineSpacing;
         }
@@ -76,12 +83,12 @@ public class CardTextRenderer
 
     // フォントサイズが文字ごとに異なっても下端が揃うよう、行の下端(lineTop + lineHeight)を基準に配置する。
     private static void DrawLine(DrawingContext context, IReadOnlyList<CharacterStyle> lineStyles, double startX, double lineTop,
-        double lineHeight, Brush foreground)
+        double lineHeight, Brush foreground, bool highlightOverrides)
     {
         var x = startX;
         foreach (var style in lineStyles)
         {
-            var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, foreground);
+            var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, BrushFor(style, foreground, highlightOverrides));
             context.DrawText(glyph, new Point(x, lineTop + (lineHeight - glyph.Height)));
             x += glyph.Width + style.LetterSpacing;
         }
@@ -89,6 +96,9 @@ public class CardTextRenderer
 
     private static void DrawDivider(DrawingContext context, Rect rect, double y, Brush foreground) =>
         context.DrawLine(new Pen(foreground, DividerThickness), new Point(rect.X, y), new Point(rect.X + rect.Width, y));
+
+    private static Brush BrushFor(CharacterStyle style, Brush foreground, bool highlightOverrides) =>
+        highlightOverrides && style.IsOverridden ? OverrideHighlightBrush : foreground;
 
     private static List<(string RawText, List<CharacterStyle> Styles)> SplitIntoLines(string text, IReadOnlyList<CharacterStyle> styles)
     {
