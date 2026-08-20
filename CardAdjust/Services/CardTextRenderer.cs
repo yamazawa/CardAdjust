@@ -13,6 +13,10 @@ namespace CardAdjust.Services;
 /// </summary>
 public class CardTextRenderer
 {
+    // 説明文のある行がこの文字列そのものである場合、その行は水平線として描画する。
+    private const string DividerLineText = "---";
+    private const double DividerThickness = 3.0;
+
     /// <summary>
     /// 1行のテキストを、指定した矩形内に水平・垂直共に中央揃えで描画する
     ///
@@ -43,6 +47,7 @@ public class CardTextRenderer
     ///
     /// 改行(\n)は描画せず、行の区切りとしてのみ扱う。stylesはtextと同じ長さで渡す
     /// (改行文字の位置にも要素は必要だが、その値は描画に使われない)。
+    /// ある行が「---」そのものである場合、その行はテキストではなく水平線として描画する。
     /// </summary>
     public void DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
         double lineSpacing, Brush foreground)
@@ -52,42 +57,56 @@ public class CardTextRenderer
 
         var lines = SplitIntoLines(text, styles);
         var lineHeights = lines
-            .Select(line => line.Count == 0 ? 0 : line.Max(c => CreateFormattedText(c.Character.ToString(), TypefaceFor(c), c.FontSize, foreground).Height))
+            .Select(line => line.Styles.Count == 0 ? 0 : line.Styles.Max(c => CreateFormattedText(c.Character.ToString(), TypefaceFor(c), c.FontSize, foreground).Height))
             .ToList();
         var totalHeight = lineHeights.Sum() + lineSpacing * Math.Max(0, lines.Count - 1);
 
         var y = rect.Y + (rect.Height - totalHeight) / 2;
         for (var i = 0; i < lines.Count; i++)
         {
-            var x = rect.X;
-            foreach (var style in lines[i])
-            {
-                var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, foreground);
-                context.DrawText(glyph, new Point(x, y));
-                x += glyph.Width + style.LetterSpacing;
-            }
+            if (lines[i].RawText == DividerLineText)
+                DrawDivider(context, rect, y + lineHeights[i] / 2, foreground);
+            else
+                DrawLine(context, lines[i].Styles, rect.X, y, foreground);
 
             y += lineHeights[i] + lineSpacing;
         }
     }
 
-    private static List<List<CharacterStyle>> SplitIntoLines(string text, IReadOnlyList<CharacterStyle> styles)
+    private static void DrawLine(DrawingContext context, IReadOnlyList<CharacterStyle> lineStyles, double startX, double y, Brush foreground)
     {
-        var lines = new List<List<CharacterStyle>>();
-        var current = new List<CharacterStyle>();
+        var x = startX;
+        foreach (var style in lineStyles)
+        {
+            var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, foreground);
+            context.DrawText(glyph, new Point(x, y));
+            x += glyph.Width + style.LetterSpacing;
+        }
+    }
+
+    private static void DrawDivider(DrawingContext context, Rect rect, double y, Brush foreground) =>
+        context.DrawLine(new Pen(foreground, DividerThickness), new Point(rect.X, y), new Point(rect.X + rect.Width, y));
+
+    private static List<(string RawText, List<CharacterStyle> Styles)> SplitIntoLines(string text, IReadOnlyList<CharacterStyle> styles)
+    {
+        var lines = new List<(string, List<CharacterStyle>)>();
+        var currentText = string.Empty;
+        var currentStyles = new List<CharacterStyle>();
         for (var i = 0; i < text.Length; i++)
         {
             if (text[i] == '\n')
             {
-                lines.Add(current);
-                current = [];
+                lines.Add((currentText, currentStyles));
+                currentText = string.Empty;
+                currentStyles = [];
                 continue;
             }
 
-            current.Add(styles[i]);
+            currentText += text[i];
+            currentStyles.Add(styles[i]);
         }
 
-        lines.Add(current);
+        lines.Add((currentText, currentStyles));
         return lines;
     }
 
