@@ -35,6 +35,9 @@
         <TextBlock Text="{x:Static resx:Strings.Label_LetterSpacing}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
         <TextBox Text="{Binding LetterSpacing}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
 
+        <CheckBox Content="{x:Static resx:Strings.Label_Bold}" IsChecked="{Binding IsBold}"
+                  Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+
         <StackPanel Visibility="{Binding ShowLineSpacing, Converter={StaticResource BooleanToVisibilityConverter}}">
             <TextBlock Text="{x:Static resx:Strings.Label_LineSpacing}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <TextBox Text="{Binding LineSpacing}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />

@@ -7,4 +7,4 @@ namespace CardAdjust.Models;
 ///
 /// 個別調整(CharacterStyleOverride)を反映した後の、描画にそのまま使える状態を表す。
 /// </summary>
-public sealed record CharacterStyle(char Character, FontFamily FontFamily, double FontSize, double LetterSpacing);
+public sealed record CharacterStyle(char Character, FontFamily FontFamily, double FontSize, double LetterSpacing, bool IsBold);
