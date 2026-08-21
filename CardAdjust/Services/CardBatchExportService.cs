@@ -56,12 +56,15 @@ public class CardBatchExportService
             TitleText = titleText,
             TitleCharacterStyles = CharacterStyleBuilder.Build(titleText, new FontFamily(titleStyle.FontFamilyName),
                 titleStyle.FontSize, titleStyle.LetterSpacing, titleStyle.IsBold, layout?.TitleOverrides ?? []),
+            TitleRect = ResolveRect(layout?.TitleDestRegion, CardTemplateLayout.TitleRect),
             IllustrationImage = CropIllustration(card, layout),
             KeepIllustrationAspectRatio = layout?.KeepIllustrationAspectRatio ?? false,
+            IllustrationRect = ResolveRect(layout?.IllustrationDestRegion, CardTemplateLayout.IllustrationRect),
             DescriptionText = descriptionText,
             DescriptionCharacterStyles = CharacterStyleBuilder.Build(descriptionText, new FontFamily(descriptionStyle.FontFamilyName),
                 descriptionStyle.FontSize, descriptionStyle.LetterSpacing, descriptionStyle.IsBold, layout?.DescriptionOverrides ?? []),
             DescriptionLineSpacing = descriptionLineSpacing,
+            DescriptionRect = ResolveRect(layout?.DescriptionDestRegion, CardTemplateLayout.DescriptionRect),
         };
     }
 
@@ -72,7 +75,10 @@ public class CardBatchExportService
         var region = layout?.IllustrationRegion
             ?? new RegionOverride(CardTemplateLayout.IllustrationX, CardTemplateLayout.IllustrationY,
                 CardTemplateLayout.IllustrationWidth, CardTemplateLayout.IllustrationHeight);
-        var rect = new Rect(region.X, region.Y, region.Width, region.Height);
-        return ImageCropper.Crop(SourceImageLoader.Load(card.FilePath), rect);
+        return ImageCropper.Crop(SourceImageLoader.Load(card.FilePath), new Rect(region.X, region.Y, region.Width, region.Height));
     }
+
+    // 個別設定(貼付先矩形)があればそれを使い、無ければ全体設定(CardTemplateLayoutの固定矩形)を使う。
+    private static Rect ResolveRect(RegionOverride? region, Rect fallback) =>
+        region is null ? fallback : new Rect(region.X, region.Y, region.Width, region.Height);
 }

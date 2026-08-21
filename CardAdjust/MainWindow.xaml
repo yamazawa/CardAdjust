@@ -70,16 +70,40 @@
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
-                                <TextBlock Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
                                            HorizontalAlignment="Left" VerticalAlignment="Top"
                                            FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
                                            Foreground="{Binding IsTitleRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
                                            Background="#AA000000" Padding="2,0" />
-                                <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
-                                           Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
-                                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                           Fill="{Binding IsTitleRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
-                                           Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
+
+                                <!-- 4隅・4辺のドラッグ可能なリサイズ領域。表示なし(Transparent)、元矩形より5px広くはみ出す。 -->
+                                <Rectangle Grid.Row="0" Grid.Column="0" Margin="-5,-5,0,0" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="TopLeft" />
+                                <Rectangle Grid.Row="0" Grid.Column="1" Margin="0,-5,0,0" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Top" />
+                                <Rectangle Grid.Row="0" Grid.Column="2" Margin="0,-5,-5,0" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="TopRight" />
+                                <Rectangle Grid.Row="1" Grid.Column="0" Margin="-5,0,0,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Left" />
+                                <Rectangle Grid.Row="1" Grid.Column="2" Margin="0,0,-5,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Right" />
+                                <Rectangle Grid.Row="2" Grid.Column="0" Margin="-5,0,0,-5" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomLeft" />
+                                <Rectangle Grid.Row="2" Grid.Column="1" Margin="0,0,0,-5" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Bottom" />
+                                <Rectangle Grid.Row="2" Grid.Column="2" Margin="0,0,-5,-5" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomRight" />
                             </Grid>
                         </Border>
                         <Border Canvas.Left="{Binding IllustrationRegionX, Mode=TwoWay}" Canvas.Top="{Binding IllustrationRegionY, Mode=TwoWay}"
@@ -88,16 +112,39 @@
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
-                                <TextBlock Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
                                            HorizontalAlignment="Left" VerticalAlignment="Top"
                                            FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
                                            Foreground="{Binding IsIllustrationRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
                                            Background="#AA000000" Padding="2,0" />
-                                <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
-                                           Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
-                                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                           Fill="{Binding IsIllustrationRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
-                                           Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
+
+                                <Rectangle Grid.Row="0" Grid.Column="0" Margin="-5,-5,0,0" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="TopLeft" />
+                                <Rectangle Grid.Row="0" Grid.Column="1" Margin="0,-5,0,0" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Top" />
+                                <Rectangle Grid.Row="0" Grid.Column="2" Margin="0,-5,-5,0" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="TopRight" />
+                                <Rectangle Grid.Row="1" Grid.Column="0" Margin="-5,0,0,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Left" />
+                                <Rectangle Grid.Row="1" Grid.Column="2" Margin="0,0,-5,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Right" />
+                                <Rectangle Grid.Row="2" Grid.Column="0" Margin="-5,0,0,-5" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomLeft" />
+                                <Rectangle Grid.Row="2" Grid.Column="1" Margin="0,0,0,-5" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Bottom" />
+                                <Rectangle Grid.Row="2" Grid.Column="2" Margin="0,0,-5,-5" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomRight" />
                             </Grid>
                         </Border>
                         <Border Canvas.Left="{Binding DescriptionRegionX, Mode=TwoWay}" Canvas.Top="{Binding DescriptionRegionY, Mode=TwoWay}"
@@ -106,16 +153,39 @@
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
-                                <TextBlock Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
                                            HorizontalAlignment="Left" VerticalAlignment="Top"
                                            FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
                                            Foreground="{Binding IsDescriptionRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
                                            Background="#AA000000" Padding="2,0" />
-                                <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
-                                           Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
-                                           HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                           Fill="{Binding IsDescriptionRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
-                                           Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
+
+                                <Rectangle Grid.Row="0" Grid.Column="0" Margin="-5,-5,0,0" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="TopLeft" />
+                                <Rectangle Grid.Row="0" Grid.Column="1" Margin="0,-5,0,0" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Top" />
+                                <Rectangle Grid.Row="0" Grid.Column="2" Margin="0,-5,-5,0" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="TopRight" />
+                                <Rectangle Grid.Row="1" Grid.Column="0" Margin="-5,0,0,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Left" />
+                                <Rectangle Grid.Row="1" Grid.Column="2" Margin="0,0,-5,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Right" />
+                                <Rectangle Grid.Row="2" Grid.Column="0" Margin="-5,0,0,-5" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomLeft" />
+                                <Rectangle Grid.Row="2" Grid.Column="1" Margin="0,0,0,-5" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Bottom" />
+                                <Rectangle Grid.Row="2" Grid.Column="2" Margin="0,0,-5,-5" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomRight" />
                             </Grid>
                         </Border>
                     </Canvas>
@@ -133,7 +203,138 @@
             <Button DockPanel.Dock="Bottom" Content="{x:Static resx:Strings.Button_Save}"
                     HorizontalAlignment="Right" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                     Command="{Binding SaveImageCommand}" />
-            <Image Source="{Binding PreviewImage}" Stretch="Uniform" />
+            <Viewbox Stretch="Uniform">
+                <Grid Width="{x:Static models:CardTemplateLayout.TemplateWidth}"
+                      Height="{x:Static models:CardTemplateLayout.TemplateHeight}">
+                    <Image Source="{Binding PreviewImage}" Stretch="Fill" />
+                    <Canvas>
+                        <!-- ①～④の貼付先矩形。元画像側の読取矩形と同様に、全体設定(青)/個別設定(黄)・ドラッグ移動・8方向リサイズに対応する。 -->
+                        <Border Canvas.Left="{Binding TitleDestX, Mode=TwoWay}" Canvas.Top="{Binding TitleDestY, Mode=TwoWay}"
+                                Width="{Binding TitleDestWidth, Mode=TwoWay}" Height="{Binding TitleDestHeight, Mode=TwoWay}"
+                                BorderBrush="{Binding IsTitleDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                BorderThickness="3" Background="Transparent" Cursor="SizeAll"
+                                behaviors:DragMoveBehavior.IsEnabled="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
+                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                           FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
+                                           Foreground="{Binding IsTitleDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Background="#AA000000" Padding="2,0" />
+
+                                <Rectangle Grid.Row="0" Grid.Column="0" Margin="-5,-5,0,0" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="TopLeft" />
+                                <Rectangle Grid.Row="0" Grid.Column="1" Margin="0,-5,0,0" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Top" />
+                                <Rectangle Grid.Row="0" Grid.Column="2" Margin="0,-5,-5,0" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="TopRight" />
+                                <Rectangle Grid.Row="1" Grid.Column="0" Margin="-5,0,0,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Left" />
+                                <Rectangle Grid.Row="1" Grid.Column="2" Margin="0,0,-5,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Right" />
+                                <Rectangle Grid.Row="2" Grid.Column="0" Margin="-5,0,0,-5" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomLeft" />
+                                <Rectangle Grid.Row="2" Grid.Column="1" Margin="0,0,0,-5" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Bottom" />
+                                <Rectangle Grid.Row="2" Grid.Column="2" Margin="0,0,-5,-5" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomRight" />
+                            </Grid>
+                        </Border>
+                        <Border Canvas.Left="{Binding IllustrationDestX, Mode=TwoWay}" Canvas.Top="{Binding IllustrationDestY, Mode=TwoWay}"
+                                Width="{Binding IllustrationDestWidth, Mode=TwoWay}" Height="{Binding IllustrationDestHeight, Mode=TwoWay}"
+                                BorderBrush="{Binding IsIllustrationDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                BorderThickness="3" Background="Transparent" Cursor="SizeAll"
+                                behaviors:DragMoveBehavior.IsEnabled="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
+                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                           FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
+                                           Foreground="{Binding IsIllustrationDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Background="#AA000000" Padding="2,0" />
+
+                                <Rectangle Grid.Row="0" Grid.Column="0" Margin="-5,-5,0,0" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="TopLeft" />
+                                <Rectangle Grid.Row="0" Grid.Column="1" Margin="0,-5,0,0" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Top" />
+                                <Rectangle Grid.Row="0" Grid.Column="2" Margin="0,-5,-5,0" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="TopRight" />
+                                <Rectangle Grid.Row="1" Grid.Column="0" Margin="-5,0,0,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Left" />
+                                <Rectangle Grid.Row="1" Grid.Column="2" Margin="0,0,-5,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Right" />
+                                <Rectangle Grid.Row="2" Grid.Column="0" Margin="-5,0,0,-5" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomLeft" />
+                                <Rectangle Grid.Row="2" Grid.Column="1" Margin="0,0,0,-5" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Bottom" />
+                                <Rectangle Grid.Row="2" Grid.Column="2" Margin="0,0,-5,-5" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomRight" />
+                            </Grid>
+                        </Border>
+                        <Border Canvas.Left="{Binding DescriptionDestX, Mode=TwoWay}" Canvas.Top="{Binding DescriptionDestY, Mode=TwoWay}"
+                                Width="{Binding DescriptionDestWidth, Mode=TwoWay}" Height="{Binding DescriptionDestHeight, Mode=TwoWay}"
+                                BorderBrush="{Binding IsDescriptionDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                BorderThickness="3" Background="Transparent" Cursor="SizeAll"
+                                behaviors:DragMoveBehavior.IsEnabled="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="*" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
+                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                           FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
+                                           Foreground="{Binding IsDescriptionDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Background="#AA000000" Padding="2,0" />
+
+                                <Rectangle Grid.Row="0" Grid.Column="0" Margin="-5,-5,0,0" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="TopLeft" />
+                                <Rectangle Grid.Row="0" Grid.Column="1" Margin="0,-5,0,0" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Top" />
+                                <Rectangle Grid.Row="0" Grid.Column="2" Margin="0,-5,-5,0" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="TopRight" />
+                                <Rectangle Grid.Row="1" Grid.Column="0" Margin="-5,0,0,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Left" />
+                                <Rectangle Grid.Row="1" Grid.Column="2" Margin="0,0,-5,0" Fill="Transparent" Cursor="SizeWE"
+                                           behaviors:ResizeHandleBehavior.Direction="Right" />
+                                <Rectangle Grid.Row="2" Grid.Column="0" Margin="-5,0,0,-5" Fill="Transparent" Cursor="SizeNESW"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomLeft" />
+                                <Rectangle Grid.Row="2" Grid.Column="1" Margin="0,0,0,-5" Fill="Transparent" Cursor="SizeNS"
+                                           behaviors:ResizeHandleBehavior.Direction="Bottom" />
+                                <Rectangle Grid.Row="2" Grid.Column="2" Margin="0,0,-5,-5" Fill="Transparent" Cursor="SizeNWSE"
+                                           behaviors:ResizeHandleBehavior.Direction="BottomRight" />
+                            </Grid>
+                        </Border>
+                    </Canvas>
+                </Grid>
+            </Viewbox>
         </DockPanel>
 
         <!-- 要素操作。②③④それぞれの読取・調整ボタンとテキストボックスを並べる。 -->

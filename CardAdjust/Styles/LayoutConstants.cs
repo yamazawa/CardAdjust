@@ -18,6 +18,7 @@ public static class LayoutConstants
     public const double ElementPanelWidth = 240;
     public const double DescriptionTextBoxHeight = 80;
     public const double RegionResizeHandleSize = 28;
+    public const double RegionResizeHandleOverhang = 5;
     public const double RegionLabelFontSize = 36;
 
     public static readonly Thickness RootMargin = new(12);

@@ -89,6 +89,23 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _titleRegionHeight = CardTemplateLayout.TitleHeight;
 
+    // ②タイトルの貼付先矩形(プレビュー上)が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isTitleDestRegionIndividual;
+
+    // ②タイトルの貼付先矩形。プレビュー上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _titleDestX = CardTemplateLayout.TitleX;
+
+    [ObservableProperty]
+    private double _titleDestY = CardTemplateLayout.TitleY;
+
+    [ObservableProperty]
+    private double _titleDestWidth = CardTemplateLayout.TitleWidth;
+
+    [ObservableProperty]
+    private double _titleDestHeight = CardTemplateLayout.TitleHeight;
+
     // ③イラストの切り抜き画像。読取ボタンを押したときのみ更新する。
     [ObservableProperty]
     private BitmapSource? _illustrationImage;
@@ -113,6 +130,23 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private double _illustrationRegionHeight = CardTemplateLayout.IllustrationHeight;
+
+    // ③イラストの貼付先矩形(プレビュー上)が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isIllustrationDestRegionIndividual;
+
+    // ③イラストの貼付先矩形。プレビュー上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _illustrationDestX = CardTemplateLayout.IllustrationX;
+
+    [ObservableProperty]
+    private double _illustrationDestY = CardTemplateLayout.IllustrationY;
+
+    [ObservableProperty]
+    private double _illustrationDestWidth = CardTemplateLayout.IllustrationWidth;
+
+    [ObservableProperty]
+    private double _illustrationDestHeight = CardTemplateLayout.IllustrationHeight;
 
     // ④説明文の文字列。複数行はテキストボックスの改行(\n)で区切る。
     [ObservableProperty]
@@ -145,6 +179,23 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private double _descriptionRegionHeight = CardTemplateLayout.DescriptionHeight;
+
+    // ④説明文の貼付先矩形(プレビュー上)が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isDescriptionDestRegionIndividual;
+
+    // ④説明文の貼付先矩形。プレビュー上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _descriptionDestX = CardTemplateLayout.DescriptionX;
+
+    [ObservableProperty]
+    private double _descriptionDestY = CardTemplateLayout.DescriptionY;
+
+    [ObservableProperty]
+    private double _descriptionDestWidth = CardTemplateLayout.DescriptionWidth;
+
+    [ObservableProperty]
+    private double _descriptionDestHeight = CardTemplateLayout.DescriptionHeight;
 
     [ObservableProperty]
     private double _windowWidth;
@@ -455,6 +506,9 @@ public partial class MainViewModel : ObservableObject
         RestoreTitleRegion(layout?.TitleRegion);
         RestoreIllustrationRegion(layout?.IllustrationRegion);
         RestoreDescriptionRegion(layout?.DescriptionRegion);
+        RestoreTitleDestRegion(layout?.TitleDestRegion);
+        RestoreIllustrationDestRegion(layout?.IllustrationDestRegion);
+        RestoreDescriptionDestRegion(layout?.DescriptionDestRegion);
     }
 
     private void RestoreTitleRegion(RegionOverride? region)
@@ -482,6 +536,33 @@ public partial class MainViewModel : ObservableObject
         DescriptionRegionY = region?.Y ?? CardTemplateLayout.DescriptionY;
         DescriptionRegionWidth = region?.Width ?? CardTemplateLayout.DescriptionWidth;
         DescriptionRegionHeight = region?.Height ?? CardTemplateLayout.DescriptionHeight;
+    }
+
+    private void RestoreTitleDestRegion(RegionOverride? region)
+    {
+        IsTitleDestRegionIndividual = region is not null;
+        TitleDestX = region?.X ?? CardTemplateLayout.TitleX;
+        TitleDestY = region?.Y ?? CardTemplateLayout.TitleY;
+        TitleDestWidth = region?.Width ?? CardTemplateLayout.TitleWidth;
+        TitleDestHeight = region?.Height ?? CardTemplateLayout.TitleHeight;
+    }
+
+    private void RestoreIllustrationDestRegion(RegionOverride? region)
+    {
+        IsIllustrationDestRegionIndividual = region is not null;
+        IllustrationDestX = region?.X ?? CardTemplateLayout.IllustrationX;
+        IllustrationDestY = region?.Y ?? CardTemplateLayout.IllustrationY;
+        IllustrationDestWidth = region?.Width ?? CardTemplateLayout.IllustrationWidth;
+        IllustrationDestHeight = region?.Height ?? CardTemplateLayout.IllustrationHeight;
+    }
+
+    private void RestoreDescriptionDestRegion(RegionOverride? region)
+    {
+        IsDescriptionDestRegionIndividual = region is not null;
+        DescriptionDestX = region?.X ?? CardTemplateLayout.DescriptionX;
+        DescriptionDestY = region?.Y ?? CardTemplateLayout.DescriptionY;
+        DescriptionDestWidth = region?.Width ?? CardTemplateLayout.DescriptionWidth;
+        DescriptionDestHeight = region?.Height ?? CardTemplateLayout.DescriptionHeight;
     }
 
     // 文字区間ごとの個別上書きも、SP2からはカードごとの保存対象になる。
@@ -622,6 +703,30 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnDescriptionRegionHeightChanged(double value) => MarkDescriptionRegionIndividual();
 
+    partial void OnTitleDestXChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnTitleDestYChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnTitleDestWidthChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnTitleDestHeightChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnIllustrationDestXChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnIllustrationDestYChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnIllustrationDestWidthChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnIllustrationDestHeightChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnDescriptionDestXChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    partial void OnDescriptionDestYChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    partial void OnDescriptionDestWidthChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    partial void OnDescriptionDestHeightChanged(double value) => MarkDescriptionDestRegionIndividual();
+
     // ドラッグ・リサイズ操作(復元中を除く)で、そのカードのその矩形を個別設定へ切り替える。
     private void MarkTitleRegionIndividual()
     {
@@ -648,6 +753,36 @@ public partial class MainViewModel : ObservableObject
 
         IsDescriptionRegionIndividual = true;
         MarkLayoutDirty();
+    }
+
+    private void MarkTitleDestRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsTitleDestRegionIndividual = true;
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
+
+    private void MarkIllustrationDestRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsIllustrationDestRegionIndividual = true;
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
+
+    private void MarkDescriptionDestRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsDescriptionDestRegionIndividual = true;
+        MarkLayoutDirty();
+        RecomposePreview();
     }
 
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
@@ -703,6 +838,9 @@ public partial class MainViewModel : ObservableObject
         IsTitleRegionIndividual ? new RegionOverride(TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight) : null,
         IsIllustrationRegionIndividual ? new RegionOverride(IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight) : null,
         IsDescriptionRegionIndividual ? new RegionOverride(DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight) : null,
+        IsTitleDestRegionIndividual ? new RegionOverride(TitleDestX, TitleDestY, TitleDestWidth, TitleDestHeight) : null,
+        IsIllustrationDestRegionIndividual ? new RegionOverride(IllustrationDestX, IllustrationDestY, IllustrationDestWidth, IllustrationDestHeight) : null,
+        IsDescriptionDestRegionIndividual ? new RegionOverride(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight) : null,
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
         _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
 
@@ -727,12 +865,15 @@ public partial class MainViewModel : ObservableObject
             TitleText = TitleText,
             TitleCharacterStyles = titleStyles,
             TitleOverrides = _titleState.Overrides,
+            TitleRect = new Rect(TitleDestX, TitleDestY, TitleDestWidth, TitleDestHeight),
             IllustrationImage = IllustrationImage,
             KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
+            IllustrationRect = new Rect(IllustrationDestX, IllustrationDestY, IllustrationDestWidth, IllustrationDestHeight),
             DescriptionText = DescriptionText,
             DescriptionCharacterStyles = descriptionStyles,
             DescriptionOverrides = _descriptionState.Overrides,
             DescriptionLineSpacing = _descriptionState.LineSpacing,
+            DescriptionRect = new Rect(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight),
             HighlightOverrides = highlightOverrides,
         };
     }
