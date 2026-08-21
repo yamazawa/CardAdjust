@@ -17,6 +17,7 @@
         MinWidth="{x:Static styles:LayoutConstants.WindowMinWidth}">
     <Window.Resources>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
+        <conv:RegionOverrideBrushConverter x:Key="RegionOverrideBrushConverter" />
     </Window.Resources>
     <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}"
           Background="Transparent"
@@ -62,40 +63,53 @@
                     <Image Source="{Binding SourceImage}" Stretch="Fill" />
                     <Canvas>
                         <!-- ドラッグで位置を、右下端のハンドルで幅・高さを個別に調整できる。 -->
+                        <!-- 枠色は全体設定(青)/個別設定(黄)を示す。個別設定になるまで塗りつぶしは不要なためTransparent(ヒットテストのため必須)。 -->
                         <Border Canvas.Left="{Binding TitleRegionX}" Canvas.Top="{Binding TitleRegionY}"
                                 Width="{Binding TitleRegionWidth}" Height="{Binding TitleRegionHeight}"
-                                BorderBrush="DodgerBlue" BorderThickness="3" Background="#33007ACC" Cursor="SizeAll"
+                                BorderBrush="{Binding IsTitleRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
+                                <TextBlock Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
+                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                           Foreground="White" Background="#AA000000" Padding="2,0" />
                                 <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                           Fill="DodgerBlue" Cursor="SizeNWSE"
-                                           behaviors:ResizeHandleBehavior.IsEnabled="True" />
+                                           Fill="{Binding IsTitleRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
                             </Grid>
                         </Border>
                         <Border Canvas.Left="{Binding IllustrationRegionX}" Canvas.Top="{Binding IllustrationRegionY}"
                                 Width="{Binding IllustrationRegionWidth}" Height="{Binding IllustrationRegionHeight}"
-                                BorderBrush="Orange" BorderThickness="3" Background="#33FF8C00" Cursor="SizeAll"
+                                BorderBrush="{Binding IsIllustrationRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
+                                <TextBlock Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
+                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                           Foreground="White" Background="#AA000000" Padding="2,0" />
                                 <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                           Fill="Orange" Cursor="SizeNWSE"
-                                           behaviors:ResizeHandleBehavior.IsEnabled="True" />
+                                           Fill="{Binding IsIllustrationRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
                             </Grid>
                         </Border>
                         <Border Canvas.Left="{Binding DescriptionRegionX}" Canvas.Top="{Binding DescriptionRegionY}"
                                 Width="{Binding DescriptionRegionWidth}" Height="{Binding DescriptionRegionHeight}"
-                                BorderBrush="Green" BorderThickness="3" Background="#3300A000" Cursor="SizeAll"
+                                BorderBrush="{Binding IsDescriptionRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
+                                <TextBlock Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
+                                           HorizontalAlignment="Left" VerticalAlignment="Top"
+                                           Foreground="White" Background="#AA000000" Padding="2,0" />
                                 <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                           Fill="Green" Cursor="SizeNWSE"
-                                           behaviors:ResizeHandleBehavior.IsEnabled="True" />
+                                           Fill="{Binding IsDescriptionRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
                             </Grid>
                         </Border>
                     </Canvas>

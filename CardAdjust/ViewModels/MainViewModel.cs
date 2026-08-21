@@ -72,6 +72,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private IReadOnlyList<OverrideSummary> _titleOverrideSummaries = [];
 
+    // ②タイトルの読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isTitleRegionIndividual;
+
     // ②タイトルの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
     private double _titleRegionX = CardTemplateLayout.TitleX;
@@ -92,6 +96,10 @@ public partial class MainViewModel : ObservableObject
     // ③イラストの縦横比キープ有無。初期値はキープしない。
     [ObservableProperty]
     private bool _keepIllustrationAspectRatio;
+
+    // ③イラストの読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isIllustrationRegionIndividual;
 
     // ③イラストの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
@@ -120,6 +128,10 @@ public partial class MainViewModel : ObservableObject
     // ④説明文の個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。
     [ObservableProperty]
     private IReadOnlyList<OverrideSummary> _descriptionOverrideSummaries = [];
+
+    // ④説明文の読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isDescriptionRegionIndividual;
 
     // ④説明文の読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
@@ -437,20 +449,39 @@ public partial class MainViewModel : ObservableObject
         KeepIllustrationAspectRatio = layout?.KeepIllustrationAspectRatio ?? false;
     }
 
+    // ③④②それぞれ、個別設定(layoutのRegion)があればそれを使い、無ければ全体設定(CardTemplateLayout)を使う。
     private void RestoreRegions(CardLayout? layout)
     {
-        TitleRegionX = layout?.TitleRegionX ?? CardTemplateLayout.TitleX;
-        TitleRegionY = layout?.TitleRegionY ?? CardTemplateLayout.TitleY;
-        TitleRegionWidth = layout?.TitleRegionWidth ?? CardTemplateLayout.TitleWidth;
-        TitleRegionHeight = layout?.TitleRegionHeight ?? CardTemplateLayout.TitleHeight;
-        IllustrationRegionX = layout?.IllustrationRegionX ?? CardTemplateLayout.IllustrationX;
-        IllustrationRegionY = layout?.IllustrationRegionY ?? CardTemplateLayout.IllustrationY;
-        IllustrationRegionWidth = layout?.IllustrationRegionWidth ?? CardTemplateLayout.IllustrationWidth;
-        IllustrationRegionHeight = layout?.IllustrationRegionHeight ?? CardTemplateLayout.IllustrationHeight;
-        DescriptionRegionX = layout?.DescriptionRegionX ?? CardTemplateLayout.DescriptionX;
-        DescriptionRegionY = layout?.DescriptionRegionY ?? CardTemplateLayout.DescriptionY;
-        DescriptionRegionWidth = layout?.DescriptionRegionWidth ?? CardTemplateLayout.DescriptionWidth;
-        DescriptionRegionHeight = layout?.DescriptionRegionHeight ?? CardTemplateLayout.DescriptionHeight;
+        RestoreTitleRegion(layout?.TitleRegion);
+        RestoreIllustrationRegion(layout?.IllustrationRegion);
+        RestoreDescriptionRegion(layout?.DescriptionRegion);
+    }
+
+    private void RestoreTitleRegion(RegionOverride? region)
+    {
+        IsTitleRegionIndividual = region is not null;
+        TitleRegionX = region?.X ?? CardTemplateLayout.TitleX;
+        TitleRegionY = region?.Y ?? CardTemplateLayout.TitleY;
+        TitleRegionWidth = region?.Width ?? CardTemplateLayout.TitleWidth;
+        TitleRegionHeight = region?.Height ?? CardTemplateLayout.TitleHeight;
+    }
+
+    private void RestoreIllustrationRegion(RegionOverride? region)
+    {
+        IsIllustrationRegionIndividual = region is not null;
+        IllustrationRegionX = region?.X ?? CardTemplateLayout.IllustrationX;
+        IllustrationRegionY = region?.Y ?? CardTemplateLayout.IllustrationY;
+        IllustrationRegionWidth = region?.Width ?? CardTemplateLayout.IllustrationWidth;
+        IllustrationRegionHeight = region?.Height ?? CardTemplateLayout.IllustrationHeight;
+    }
+
+    private void RestoreDescriptionRegion(RegionOverride? region)
+    {
+        IsDescriptionRegionIndividual = region is not null;
+        DescriptionRegionX = region?.X ?? CardTemplateLayout.DescriptionX;
+        DescriptionRegionY = region?.Y ?? CardTemplateLayout.DescriptionY;
+        DescriptionRegionWidth = region?.Width ?? CardTemplateLayout.DescriptionWidth;
+        DescriptionRegionHeight = region?.Height ?? CardTemplateLayout.DescriptionHeight;
     }
 
     // 文字区間ごとの個別上書きも、SP2からはカードごとの保存対象になる。
@@ -567,29 +598,57 @@ public partial class MainViewModel : ObservableObject
         return i;
     }
 
-    partial void OnTitleRegionXChanged(double value) => MarkLayoutDirty();
+    partial void OnTitleRegionXChanged(double value) => MarkTitleRegionIndividual();
 
-    partial void OnTitleRegionYChanged(double value) => MarkLayoutDirty();
+    partial void OnTitleRegionYChanged(double value) => MarkTitleRegionIndividual();
 
-    partial void OnTitleRegionWidthChanged(double value) => MarkLayoutDirty();
+    partial void OnTitleRegionWidthChanged(double value) => MarkTitleRegionIndividual();
 
-    partial void OnTitleRegionHeightChanged(double value) => MarkLayoutDirty();
+    partial void OnTitleRegionHeightChanged(double value) => MarkTitleRegionIndividual();
 
-    partial void OnIllustrationRegionXChanged(double value) => MarkLayoutDirty();
+    partial void OnIllustrationRegionXChanged(double value) => MarkIllustrationRegionIndividual();
 
-    partial void OnIllustrationRegionYChanged(double value) => MarkLayoutDirty();
+    partial void OnIllustrationRegionYChanged(double value) => MarkIllustrationRegionIndividual();
 
-    partial void OnIllustrationRegionWidthChanged(double value) => MarkLayoutDirty();
+    partial void OnIllustrationRegionWidthChanged(double value) => MarkIllustrationRegionIndividual();
 
-    partial void OnIllustrationRegionHeightChanged(double value) => MarkLayoutDirty();
+    partial void OnIllustrationRegionHeightChanged(double value) => MarkIllustrationRegionIndividual();
 
-    partial void OnDescriptionRegionXChanged(double value) => MarkLayoutDirty();
+    partial void OnDescriptionRegionXChanged(double value) => MarkDescriptionRegionIndividual();
 
-    partial void OnDescriptionRegionYChanged(double value) => MarkLayoutDirty();
+    partial void OnDescriptionRegionYChanged(double value) => MarkDescriptionRegionIndividual();
 
-    partial void OnDescriptionRegionWidthChanged(double value) => MarkLayoutDirty();
+    partial void OnDescriptionRegionWidthChanged(double value) => MarkDescriptionRegionIndividual();
 
-    partial void OnDescriptionRegionHeightChanged(double value) => MarkLayoutDirty();
+    partial void OnDescriptionRegionHeightChanged(double value) => MarkDescriptionRegionIndividual();
+
+    // ドラッグ・リサイズ操作(復元中を除く)で、そのカードのその矩形を個別設定へ切り替える。
+    private void MarkTitleRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsTitleRegionIndividual = true;
+        MarkLayoutDirty();
+    }
+
+    private void MarkIllustrationRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsIllustrationRegionIndividual = true;
+        MarkLayoutDirty();
+    }
+
+    private void MarkDescriptionRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsDescriptionRegionIndividual = true;
+        MarkLayoutDirty();
+    }
 
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
 
@@ -641,9 +700,9 @@ public partial class MainViewModel : ObservableObject
     }
 
     private CardLayout BuildCurrentLayout() => new(
-        TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight,
-        IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight,
-        DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight,
+        IsTitleRegionIndividual ? new RegionOverride(TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight) : null,
+        IsIllustrationRegionIndividual ? new RegionOverride(IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight) : null,
+        IsDescriptionRegionIndividual ? new RegionOverride(DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight) : null,
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
         _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
 

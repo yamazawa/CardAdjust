@@ -66,12 +66,13 @@ public class CardBatchExportService
     }
 
     // イラストは矩形のみ保存対象のため、出力のたびに元画像から切り抜き直す。
-    private static BitmapSource? CropIllustration(CardImage card, CardLayout? layout)
+    // 個別設定(IllustrationRegion)があればそれを使い、無ければ全体設定(CardTemplateLayout)で切り抜く。
+    private static BitmapSource CropIllustration(CardImage card, CardLayout? layout)
     {
-        if (layout is null)
-            return null;
-
-        var rect = new Rect(layout.IllustrationRegionX, layout.IllustrationRegionY, layout.IllustrationRegionWidth, layout.IllustrationRegionHeight);
+        var region = layout?.IllustrationRegion
+            ?? new RegionOverride(CardTemplateLayout.IllustrationX, CardTemplateLayout.IllustrationY,
+                CardTemplateLayout.IllustrationWidth, CardTemplateLayout.IllustrationHeight);
+        var rect = new Rect(region.X, region.Y, region.Width, region.Height);
         return ImageCropper.Crop(SourceImageLoader.Load(card.FilePath), rect);
     }
 }
