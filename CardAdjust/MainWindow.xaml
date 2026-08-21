@@ -72,7 +72,9 @@
                             <Grid>
                                 <TextBlock Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
                                            HorizontalAlignment="Left" VerticalAlignment="Top"
-                                           Foreground="White" Background="#AA000000" Padding="2,0" />
+                                           FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
+                                           Foreground="{Binding IsTitleRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Background="#AA000000" Padding="2,0" />
                                 <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
@@ -88,7 +90,9 @@
                             <Grid>
                                 <TextBlock Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
                                            HorizontalAlignment="Left" VerticalAlignment="Top"
-                                           Foreground="White" Background="#AA000000" Padding="2,0" />
+                                           FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
+                                           Foreground="{Binding IsIllustrationRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Background="#AA000000" Padding="2,0" />
                                 <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
@@ -104,7 +108,9 @@
                             <Grid>
                                 <TextBlock Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
                                            HorizontalAlignment="Left" VerticalAlignment="Top"
-                                           Foreground="White" Background="#AA000000" Padding="2,0" />
+                                           FontSize="{x:Static styles:LayoutConstants.RegionLabelFontSize}"
+                                           Foreground="{Binding IsDescriptionRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                           Background="#AA000000" Padding="2,0" />
                                 <Rectangle Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}"
                                            HorizontalAlignment="Right" VerticalAlignment="Bottom"
