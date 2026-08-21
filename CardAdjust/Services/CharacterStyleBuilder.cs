@@ -16,8 +16,8 @@ public static class CharacterStyleBuilder
         {
             var matched = overrides.FirstOrDefault(o => i >= o.Start && i < o.Start + o.Length);
             styles[i] = matched is null
-                ? new CharacterStyle(text[i], defaultFontFamily, defaultFontSize, defaultLetterSpacing, defaultIsBold, IsOverridden: false)
-                : new CharacterStyle(text[i], new FontFamily(matched.FontFamilyName), matched.FontSize, matched.LetterSpacing, matched.IsBold, IsOverridden: true);
+                ? new CharacterStyle(text[i], defaultFontFamily, defaultFontSize, defaultLetterSpacing, defaultIsBold)
+                : new CharacterStyle(text[i], new FontFamily(matched.FontFamilyName), matched.FontSize, matched.LetterSpacing, matched.IsBold);
         }
 
         return styles;

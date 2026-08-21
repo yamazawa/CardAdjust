@@ -17,17 +17,17 @@ public class CardTextRenderer
     private const string DividerLineText = "---";
     private const double DividerThickness = 3.0;
 
-    // 個別調整による上書きの色分け表示・番号付き矩形(プレビュー専用)に使う色・サイズ。
+    // 個別調整の番号付き矩形(プレビュー専用)に使う色・サイズ。文字自体の色は変えない。
     private static readonly Brush OverrideHighlightBrush = Brushes.Yellow;
     private const double AnnotationPadding = 2.0;
-    private const double AnnotationNumberFontSize = 14.0;
+    private const double AnnotationNumberFontSize = 42.0;
 
     /// <summary>
     /// 1行のテキストを、指定した矩形内に水平・垂直共に中央揃えで描画する
     ///
     /// stylesはtextと同じ長さ(1文字につき1要素)で渡す。
-    /// highlightOverridesがtrueの場合、個別調整で上書きされている文字を色分け表示し、
-    /// overridesの区間ごとに番号付きの矩形を重ねて描画する。
+    /// highlightOverridesがtrueの場合、overridesの区間ごとに番号付きの矩形を重ねて描画する
+    /// (文字自体の色はforegroundのまま変えない)。
     /// </summary>
     public void DrawCenteredSingleLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
         Brush foreground, bool highlightOverrides, IReadOnlyList<CharacterStyleOverride> overrides)
@@ -35,8 +35,7 @@ public class CardTextRenderer
         if (text.Length == 0)
             return;
 
-        var glyphs = text.Select((c, i) => CreateFormattedText(c.ToString(), TypefaceFor(styles[i]), styles[i].FontSize,
-            BrushFor(styles[i], foreground, highlightOverrides))).ToList();
+        var glyphs = text.Select((c, i) => CreateFormattedText(c.ToString(), TypefaceFor(styles[i]), styles[i].FontSize, foreground)).ToList();
         var spacingTotal = Enumerable.Range(0, glyphs.Count - 1).Sum(i => styles[i].LetterSpacing);
         var totalWidth = glyphs.Sum(g => g.Width) + spacingTotal;
         var lineHeight = glyphs.Max(g => g.Height);
@@ -64,8 +63,8 @@ public class CardTextRenderer
     /// 改行(\n)は描画せず、行の区切りとしてのみ扱う。stylesはtextと同じ長さで渡す
     /// (改行文字の位置にも要素は必要だが、その値は描画に使われない)。
     /// ある行が「---」そのものである場合、その行はテキストではなく水平線として描画する。
-    /// highlightOverridesがtrueの場合、個別調整で上書きされている文字を色分け表示し、
-    /// overridesの区間ごとに番号付きの矩形を重ねて描画する。
+    /// highlightOverridesがtrueの場合、overridesの区間ごとに番号付きの矩形を重ねて描画する
+    /// (文字自体の色はforegroundのまま変えない)。
     /// </summary>
     public void DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
         double lineSpacing, Brush foreground, bool highlightOverrides, IReadOnlyList<CharacterStyleOverride> overrides)
@@ -86,7 +85,7 @@ public class CardTextRenderer
             if (lines[i].RawText == DividerLineText)
                 DrawDivider(context, rect, y + lineHeights[i] / 2, foreground);
             else
-                DrawLine(context, lines[i].Styles, rect.X, y, lineHeights[i], foreground, highlightOverrides, charBounds, lines[i].StartIndex);
+                DrawLine(context, lines[i].Styles, rect.X, y, lineHeights[i], foreground, charBounds, lines[i].StartIndex);
 
             y += lineHeights[i] + lineSpacing;
         }
@@ -98,13 +97,13 @@ public class CardTextRenderer
     // フォントサイズが文字ごとに異なっても下端が揃うよう、行の下端(lineTop + lineHeight)を基準に配置する。
     // 描画した各文字の矩形をcharBounds[startIndex + 行内位置]へ記録する(番号付き矩形の描画に使う)。
     private static void DrawLine(DrawingContext context, IReadOnlyList<CharacterStyle> lineStyles, double startX, double lineTop,
-        double lineHeight, Brush foreground, bool highlightOverrides, Rect[] charBounds, int startIndex)
+        double lineHeight, Brush foreground, Rect[] charBounds, int startIndex)
     {
         var x = startX;
         for (var j = 0; j < lineStyles.Count; j++)
         {
             var style = lineStyles[j];
-            var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, BrushFor(style, foreground, highlightOverrides));
+            var glyph = CreateFormattedText(style.Character.ToString(), TypefaceFor(style), style.FontSize, foreground);
             var y = lineTop + (lineHeight - glyph.Height);
             context.DrawText(glyph, new Point(x, y));
             charBounds[startIndex + j] = new Rect(new Point(x, y), new Size(glyph.Width, glyph.Height));
@@ -114,9 +113,6 @@ public class CardTextRenderer
 
     private static void DrawDivider(DrawingContext context, Rect rect, double y, Brush foreground) =>
         context.DrawLine(new Pen(foreground, DividerThickness), new Point(rect.X, y), new Point(rect.X + rect.Width, y));
-
-    private static Brush BrushFor(CharacterStyle style, Brush foreground, bool highlightOverrides) =>
-        highlightOverrides && style.IsOverridden ? OverrideHighlightBrush : foreground;
 
     private static Rect[] NewCharBoundsArray(int length)
     {
