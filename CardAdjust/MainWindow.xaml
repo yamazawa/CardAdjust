@@ -64,8 +64,8 @@
                     <Canvas>
                         <!-- ドラッグで位置を、右下端のハンドルで幅・高さを個別に調整できる。 -->
                         <!-- 枠色は全体設定(青)/個別設定(黄)を示す。個別設定になるまで塗りつぶしは不要なためTransparent(ヒットテストのため必須)。 -->
-                        <Border Canvas.Left="{Binding TitleRegionX}" Canvas.Top="{Binding TitleRegionY}"
-                                Width="{Binding TitleRegionWidth}" Height="{Binding TitleRegionHeight}"
+                        <Border Canvas.Left="{Binding TitleRegionX, Mode=TwoWay}" Canvas.Top="{Binding TitleRegionY, Mode=TwoWay}"
+                                Width="{Binding TitleRegionWidth, Mode=TwoWay}" Height="{Binding TitleRegionHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsTitleRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
@@ -82,8 +82,8 @@
                                            Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
                             </Grid>
                         </Border>
-                        <Border Canvas.Left="{Binding IllustrationRegionX}" Canvas.Top="{Binding IllustrationRegionY}"
-                                Width="{Binding IllustrationRegionWidth}" Height="{Binding IllustrationRegionHeight}"
+                        <Border Canvas.Left="{Binding IllustrationRegionX, Mode=TwoWay}" Canvas.Top="{Binding IllustrationRegionY, Mode=TwoWay}"
+                                Width="{Binding IllustrationRegionWidth, Mode=TwoWay}" Height="{Binding IllustrationRegionHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsIllustrationRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
@@ -100,8 +100,8 @@
                                            Cursor="SizeNWSE" behaviors:ResizeHandleBehavior.IsEnabled="True" />
                             </Grid>
                         </Border>
-                        <Border Canvas.Left="{Binding DescriptionRegionX}" Canvas.Top="{Binding DescriptionRegionY}"
-                                Width="{Binding DescriptionRegionWidth}" Height="{Binding DescriptionRegionHeight}"
+                        <Border Canvas.Left="{Binding DescriptionRegionX, Mode=TwoWay}" Canvas.Top="{Binding DescriptionRegionY, Mode=TwoWay}"
+                                Width="{Binding DescriptionRegionWidth, Mode=TwoWay}" Height="{Binding DescriptionRegionHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsDescriptionRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
