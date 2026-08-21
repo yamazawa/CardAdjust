@@ -35,6 +35,10 @@ public partial class MainViewModel : ObservableObject
     // カードの読込・復元中はユーザー操作ではないため、MarkLayoutDirtyを抑制するためのガード。
     private bool _isRestoringLayout;
 
+    // 直前のテキスト。文字入力で増えた区間を検出し、個別設定(Overrides)を追従させるために保持する。
+    private string _previousTitleText = string.Empty;
+    private string _previousDescriptionText = string.Empty;
+
     // ②タイトル・④説明文の統一レイアウト設定＋文字区間ごとの個別上書き。互いに別に保持する。
     private readonly TextElementState _titleState;
     private readonly TextElementState _descriptionState;
@@ -461,6 +465,10 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnTitleTextChanged(string value)
     {
+        if (!_isRestoringLayout)
+            ShiftOverridesForInsertion(_titleState.Overrides, _previousTitleText, value);
+        _previousTitleText = value;
+
         MarkLayoutDirty();
         RecomposePreview();
     }
@@ -479,13 +487,49 @@ public partial class MainViewModel : ObservableObject
 
         // AcceptsReturn=TrueのTextBoxはEnter入力時に\r\nを挿入するため、
         // 個別調整の区間位置が\nのみの想定とずれないよう正規化する。
+        // (正規化前の\r\n混じりの値ではOverridesを追従させない。正規化後に1回だけ行う。)
         if (value.Contains('\r'))
         {
             DescriptionText = value.Replace("\r\n", "\n").Replace('\r', '\n');
             return;
         }
 
+        if (!_isRestoringLayout)
+            ShiftOverridesForInsertion(_descriptionState.Overrides, _previousDescriptionText, value);
+        _previousDescriptionText = value;
+
         RecomposePreview();
+    }
+
+    // 文字入力で文字数が増えた場合、増えた区間の位置(insertIndex)に応じて個別設定(Overrides)を追従させる。
+    // 増えた区間を含む個別設定は文字数を増やし、それより開始位置が後ろの個別設定は開始位置をずらす。
+    // (文字数が減った場合は対象外。個別調整ダイアログの開始位置・文字数欄で手動修正できる。)
+    private static void ShiftOverridesForInsertion(List<CharacterStyleOverride> overrides, string oldText, string newText)
+    {
+        if (newText.Length <= oldText.Length)
+            return;
+
+        var insertIndex = CommonPrefixLength(oldText, newText);
+        var insertedCount = newText.Length - oldText.Length;
+
+        for (var i = 0; i < overrides.Count; i++)
+        {
+            var o = overrides[i];
+            if (insertIndex >= o.Start && insertIndex < o.Start + o.Length)
+                overrides[i] = o with { Length = o.Length + insertedCount };
+            else if (insertIndex < o.Start)
+                overrides[i] = o with { Start = o.Start + insertedCount };
+        }
+    }
+
+    private static int CommonPrefixLength(string a, string b)
+    {
+        var max = Math.Min(a.Length, b.Length);
+        var i = 0;
+        while (i < max && a[i] == b[i])
+            i++;
+
+        return i;
     }
 
     partial void OnTitleRegionXChanged(double value) => MarkLayoutDirty();
