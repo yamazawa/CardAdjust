@@ -466,7 +466,7 @@ public partial class MainViewModel : ObservableObject
     partial void OnTitleTextChanged(string value)
     {
         if (!_isRestoringLayout)
-            ShiftOverridesForInsertion(_titleState.Overrides, _previousTitleText, value);
+            ShiftOverridesForTextChange(_titleState.Overrides, _previousTitleText, value);
         _previousTitleText = value;
 
         MarkLayoutDirty();
@@ -495,20 +495,25 @@ public partial class MainViewModel : ObservableObject
         }
 
         if (!_isRestoringLayout)
-            ShiftOverridesForInsertion(_descriptionState.Overrides, _previousDescriptionText, value);
+            ShiftOverridesForTextChange(_descriptionState.Overrides, _previousDescriptionText, value);
         _previousDescriptionText = value;
 
         RecomposePreview();
     }
 
-    // 文字入力で文字数が増えた場合、増えた区間の位置(insertIndex)に応じて個別設定(Overrides)を追従させる。
-    // 増えた区間を含む個別設定は文字数を増やし、それより開始位置が後ろの個別設定は開始位置をずらす。
-    // (文字数が減った場合は対象外。個別調整ダイアログの開始位置・文字数欄で手動修正できる。)
+    // 文字入力・削除でテキストの長さが変わった場合、変化した区間の位置に応じて個別設定(Overrides)を追従させる。
+    private static void ShiftOverridesForTextChange(List<CharacterStyleOverride> overrides, string oldText, string newText)
+    {
+        if (newText.Length > oldText.Length)
+            ShiftOverridesForInsertion(overrides, oldText, newText);
+        else if (newText.Length < oldText.Length)
+            ShiftOverridesForDeletion(overrides, oldText, newText);
+    }
+
+    // 増えた区間(insertIndex, insertedCount)を含む個別設定は文字数を増やし、
+    // それより開始位置が後ろの個別設定は開始位置をずらす。
     private static void ShiftOverridesForInsertion(List<CharacterStyleOverride> overrides, string oldText, string newText)
     {
-        if (newText.Length <= oldText.Length)
-            return;
-
         var insertIndex = CommonPrefixLength(oldText, newText);
         var insertedCount = newText.Length - oldText.Length;
 
@@ -520,6 +525,36 @@ public partial class MainViewModel : ObservableObject
             else if (insertIndex < o.Start)
                 overrides[i] = o with { Start = o.Start + insertedCount };
         }
+    }
+
+    // 削除された区間([deleteIndex, deleteIndex+deletedCount))と重なる個別設定は、
+    // 重なった分だけ文字数を減らし(削除区間内に開始位置があれば削除区間の先頭まで縮める)、
+    // 削除区間より開始位置が後ろの個別設定は開始位置をずらす。
+    // 縮んだ結果、文字数が0以下になった個別設定は削除する。
+    private static void ShiftOverridesForDeletion(List<CharacterStyleOverride> overrides, string oldText, string newText)
+    {
+        var deleteIndex = CommonPrefixLength(oldText, newText);
+        var deletedCount = oldText.Length - newText.Length;
+
+        for (var i = 0; i < overrides.Count; i++)
+        {
+            var o = overrides[i];
+            var newStart = MapPositionAfterDeletion(o.Start, deleteIndex, deletedCount);
+            var newEnd = MapPositionAfterDeletion(o.Start + o.Length, deleteIndex, deletedCount);
+            overrides[i] = o with { Start = newStart, Length = newEnd - newStart };
+        }
+
+        overrides.RemoveAll(o => o.Length <= 0);
+    }
+
+    // 削除前の位置(position)が、削除後のテキストでどの位置に対応するかを求める。
+    // 削除区間の内側にあった位置は、削除区間の先頭(deleteIndex)へ収束させる。
+    private static int MapPositionAfterDeletion(int position, int deleteIndex, int deletedCount)
+    {
+        if (position <= deleteIndex)
+            return position;
+
+        return position >= deleteIndex + deletedCount ? position - deletedCount : deleteIndex;
     }
 
     private static int CommonPrefixLength(string a, string b)
