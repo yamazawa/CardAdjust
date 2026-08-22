@@ -27,8 +27,6 @@ public sealed class CardCompositionRequest
     public IReadOnlyList<CharacterStyleOverride> DescriptionOverrides { get; init; } = [];
     public double DescriptionLineSpacing { get; init; }
     public Rect DescriptionRect { get; init; } = CardTemplateLayout.DescriptionRect;
-
-    // trueの場合、個別調整による上書きが適用されている文字を色分け表示し、
-    // どの区間が何番の個別設定かを示す番号付きの矩形を重ねて描画する(プレビュー専用。保存・一斉出力ではfalseを渡す)。
-    public bool HighlightOverrides { get; init; }
+    public DividerStyle DefaultDividerStyle { get; init; } = DividerStyle.Default;
+    public IReadOnlyList<DividerStyleOverride> DividerOverrides { get; init; } = [];
 }

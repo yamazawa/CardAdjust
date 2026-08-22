@@ -40,8 +40,8 @@ public class CardBatchExportService
     {
         var layout = _layoutService.TryGet(card.FilePath);
         var request = BuildRequest(card, layout, frameTemplate, titleStyle, descriptionStyle, descriptionLineSpacing);
-        var composed = _compositionService.Compose(request);
-        _imageSaveService.SaveAsPng(composed, Path.Combine(outputFolder, $"{card.DisplayName}.png"));
+        var result = _compositionService.Compose(request);
+        _imageSaveService.SaveAsPng(result.Image, Path.Combine(outputFolder, $"{card.DisplayName}.png"));
     }
 
     private CardCompositionRequest BuildRequest(CardImage card, CardLayout? layout, BitmapImage frameTemplate,
@@ -65,6 +65,7 @@ public class CardBatchExportService
                 descriptionStyle.FontSize, descriptionStyle.LetterSpacing, descriptionStyle.IsBold, layout?.DescriptionOverrides ?? []),
             DescriptionLineSpacing = descriptionLineSpacing,
             DescriptionRect = ResolveRect(layout?.DescriptionDestRegion, CardTemplateLayout.DescriptionRect),
+            DividerOverrides = layout?.DescriptionDividerOverrides ?? [],
         };
     }
 

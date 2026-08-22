@@ -19,4 +19,4 @@ public sealed record AppSettings(
     double DescriptionLineSpacing = 10,
     bool DescriptionBold = false,
     string BatchExportFolder = "",
-    bool HighlightOverridesEnabled = true);
+    bool ShowGuide = true);

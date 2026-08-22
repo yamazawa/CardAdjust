@@ -25,6 +25,7 @@ public partial class MainViewModel : ObservableObject
     private readonly SaveFileDialogService _saveFileDialogService;
     private readonly ImageSaveService _imageSaveService;
     private readonly CardBatchExportService _batchExportService;
+    private readonly DividerAdjustDialogService _dividerAdjustDialogService;
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
     private bool _layoutDirty;
@@ -42,6 +43,9 @@ public partial class MainViewModel : ObservableObject
     // ②タイトル・④説明文の統一レイアウト設定＋文字区間ごとの個別上書き。互いに別に保持する。
     private readonly TextElementState _titleState;
     private readonly TextElementState _descriptionState;
+
+    // ④説明文中の水平線(「---」の行)ごとの、太さ・上下Marginの個別上書き。
+    private readonly List<DividerStyleOverride> _descriptionDividerOverrides = [];
 
     [ObservableProperty]
     private IReadOnlyList<CardImage> _cardList;
@@ -71,6 +75,10 @@ public partial class MainViewModel : ObservableObject
     // ②タイトルの個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。
     [ObservableProperty]
     private IReadOnlyList<OverrideSummary> _titleOverrideSummaries = [];
+
+    // ②タイトルの個別設定の番号付き矩形。プレビュー画面上にクリック可能な要素として重ねて表示する。
+    [ObservableProperty]
+    private IReadOnlyList<OverrideAnnotation> _titleAnnotations = [];
 
     // ②タイトルの読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
     [ObservableProperty]
@@ -163,6 +171,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private IReadOnlyList<OverrideSummary> _descriptionOverrideSummaries = [];
 
+    // ④説明文の個別設定の番号付き矩形。プレビュー画面上にクリック可能な要素として重ねて表示する。
+    [ObservableProperty]
+    private IReadOnlyList<OverrideAnnotation> _descriptionAnnotations = [];
+
     // ④説明文の読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
     [ObservableProperty]
     private bool _isDescriptionRegionIndividual;
@@ -207,14 +219,15 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _batchExportFolder;
 
-    // 個別調整による上書きをプレビュー画面上で色分け表示するか。次回起動時も保持する。
+    // プレビュー画面上に、個別設定の番号付き矩形・貼付先矩形などのガイドを表示するか。次回起動時も保持する。
     [ObservableProperty]
-    private bool _highlightOverridesEnabled;
+    private bool _showGuide;
 
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
         ImageSaveService imageSaveService, AppSettingsService settingsService, CardLayoutService layoutService,
-        CardBatchExportService batchExportService, AppSettings settings, string cardFolder)
+        CardBatchExportService batchExportService, DividerAdjustDialogService dividerAdjustDialogService,
+        AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
         _layoutService = layoutService;
@@ -224,6 +237,7 @@ public partial class MainViewModel : ObservableObject
         _saveFileDialogService = saveFileDialogService;
         _imageSaveService = imageSaveService;
         _batchExportService = batchExportService;
+        _dividerAdjustDialogService = dividerAdjustDialogService;
 
         _titleState = new TextElementState
         {
@@ -246,7 +260,7 @@ public partial class MainViewModel : ObservableObject
         _windowWidth = settings.WindowWidth;
         _windowHeight = settings.WindowHeight;
         _batchExportFolder = settings.BatchExportFolder;
-        _highlightOverridesEnabled = settings.HighlightOverridesEnabled;
+        _showGuide = settings.ShowGuide;
 
         // OnSelectedCardChangedがRecomposePreviewを呼ぶ可能性があるため、
         // カード一覧の読み込みより先にフレームテンプレートを読み込んでおく。
@@ -285,15 +299,15 @@ public partial class MainViewModel : ObservableObject
     private void AdjustTitle() => OpenAdjustDialog(TitleText, TitleSelectionStart, TitleSelectionLength, _titleState, showLineSpacing: false);
 
     /// <summary>
-    /// 個別設定一覧の番号から、対象のOverridesを直接編集する
+    /// 個別設定一覧の番号、またはプレビュー上の番号付き矩形から、対象のOverridesを直接編集する
     /// </summary>
     [RelayCommand]
-    private void AdjustTitleOverride(OverrideSummary? summary)
+    private void AdjustTitleOverride(CharacterStyleOverride? o)
     {
-        if (summary is null)
+        if (o is null)
             return;
 
-        OpenAdjustDialog(TitleText, summary.Override.Start, summary.Override.Length, _titleState, showLineSpacing: false);
+        OpenAdjustDialog(TitleText, o.Start, o.Length, _titleState, showLineSpacing: false);
     }
 
     /// <summary>
@@ -331,29 +345,83 @@ public partial class MainViewModel : ObservableObject
     /// <summary>
     /// 説明文の個別調整ダイアログを開く(行間隔も対象に含める)
     ///
+    /// 選択範囲が水平線(「---」のみの行)の場合は、水平線専用の個別調整ダイアログを開く。
     /// 範囲選択が無い場合は、④説明文の共通設定を編集する。
     /// </summary>
     [RelayCommand]
-    private void AdjustDescription() =>
-        OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+    private void AdjustDescription()
+    {
+        if (FindDividerLineRange(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength) is { } range)
+            OpenDividerAdjustDialog(range.Start, range.Length);
+        else
+            OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+    }
+
+    // 選択範囲を含む行が「---」そのものである場合、その行全体(Start・Length)を返す。
+    private static (int Start, int Length)? FindDividerLineRange(string text, int selectionStart, int selectionLength)
+    {
+        if (selectionLength <= 0)
+            return null;
+
+        var searchFrom = Math.Clamp(selectionStart, 0, text.Length);
+        var lineStart = text.LastIndexOf('\n', Math.Max(0, searchFrom - 1)) + 1;
+        var nextNewline = text.IndexOf('\n', searchFrom);
+        var lineEnd = nextNewline < 0 ? text.Length : nextNewline;
+        var lineText = text[lineStart..lineEnd];
+
+        return lineText == "---" ? (lineStart, lineEnd - lineStart) : null;
+    }
+
+    // 水平線の太さ・上下Marginを個別に編集する。既存の上書きがあればその値を初期表示する。
+    private void OpenDividerAdjustDialog(int start, int length)
+    {
+        var existing = _descriptionDividerOverrides.FirstOrDefault(o => o.Start == start && o.Length == length);
+        var baseline = existing is null
+            ? DividerStyle.Default
+            : new DividerStyle(existing.Thickness, existing.MarginTop, existing.MarginBottom);
+
+        var viewModel = new DividerAdjustDialogViewModel(baseline.Thickness, baseline.MarginTop, baseline.MarginBottom, existing is not null);
+
+        viewModel.LiveChanged += () => ApplyDividerAdjustLive(start, length, viewModel);
+        viewModel.ClearRequested += () => _descriptionDividerOverrides.RemoveAll(o => o.Start == start && o.Length == length);
+
+        _dividerAdjustDialogService.ShowModal(viewModel);
+
+        if (viewModel.WasCanceled)
+            RevertDividerAdjust(start, length, existing);
+
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
+
+    private void ApplyDividerAdjustLive(int start, int length, DividerAdjustDialogViewModel viewModel)
+    {
+        _descriptionDividerOverrides.RemoveAll(o => o.Start == start && o.Length == length);
+        _descriptionDividerOverrides.Add(new DividerStyleOverride(start, length, viewModel.Thickness, viewModel.MarginTop, viewModel.MarginBottom));
+        RecomposePreview();
+    }
+
+    private void RevertDividerAdjust(int start, int length, DividerStyleOverride? original)
+    {
+        _descriptionDividerOverrides.RemoveAll(o => o.Start == start && o.Length == length);
+        if (original is not null)
+            _descriptionDividerOverrides.Add(original);
+    }
 
     /// <summary>
-    /// 個別設定一覧の番号から、対象のOverridesを直接編集する
+    /// 個別設定一覧の番号、またはプレビュー上の番号付き矩形から、対象のOverridesを直接編集する
     /// </summary>
     [RelayCommand]
-    private void AdjustDescriptionOverride(OverrideSummary? summary)
+    private void AdjustDescriptionOverride(CharacterStyleOverride? o)
     {
-        if (summary is null)
+        if (o is null)
             return;
 
-        OpenAdjustDialog(DescriptionText, summary.Override.Start, summary.Override.Length, _descriptionState, showLineSpacing: true);
+        OpenAdjustDialog(DescriptionText, o.Start, o.Length, _descriptionState, showLineSpacing: true);
     }
 
     /// <summary>
     /// ①～④を合成した完成画像を保存先を選んでPNGとして保存する
-    ///
-    /// プレビュー画面の個別設定の色分け表示(HighlightOverrides)は、
-    /// 編集用の表示のため保存画像には反映しない。
     /// </summary>
     [RelayCommand]
     private void SaveImage()
@@ -365,8 +433,8 @@ public partial class MainViewModel : ObservableObject
         if (filePath is null)
             return;
 
-        var image = _compositionService.Compose(BuildCompositionRequest(highlightOverrides: false));
-        _imageSaveService.SaveAsPng(image, filePath);
+        var result = _compositionService.Compose(BuildCompositionRequest());
+        _imageSaveService.SaveAsPng(result.Image, filePath);
     }
 
     /// <summary>
@@ -573,6 +641,8 @@ public partial class MainViewModel : ObservableObject
         _titleState.Overrides.AddRange(layout?.TitleOverrides ?? []);
         _descriptionState.Overrides.Clear();
         _descriptionState.Overrides.AddRange(layout?.DescriptionOverrides ?? []);
+        _descriptionDividerOverrides.Clear();
+        _descriptionDividerOverrides.AddRange(layout?.DescriptionDividerOverrides ?? []);
     }
 
     partial void OnTitleTextChanged(string value)
@@ -791,7 +861,7 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnBatchExportFolderChanged(string value) => MarkSettingsDirty();
 
-    partial void OnHighlightOverridesEnabledChanged(bool value)
+    partial void OnShowGuideChanged(bool value)
     {
         MarkSettingsDirty();
         RecomposePreview();
@@ -817,7 +887,7 @@ public partial class MainViewModel : ObservableObject
         _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
             _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold,
             _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing, _descriptionState.IsBold,
-            BatchExportFolder, HighlightOverridesEnabled));
+            BatchExportFolder, ShowGuide));
     }
 
     /// <summary>
@@ -842,17 +912,29 @@ public partial class MainViewModel : ObservableObject
         IsIllustrationDestRegionIndividual ? new RegionOverride(IllustrationDestX, IllustrationDestY, IllustrationDestWidth, IllustrationDestHeight) : null,
         IsDescriptionDestRegionIndividual ? new RegionOverride(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight) : null,
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
-        _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
+        _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList(), _descriptionDividerOverrides.ToList());
 
-    // プレビューではHighlightOverridesEnabledに応じて個別調整による上書きを色分け表示する。
-    // 保存・一斉出力では色分け表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
+    // プレビューでは番号付き矩形などのガイド(TitleAnnotations/DescriptionAnnotations)を、
+    // ShowGuideに応じて画面側で表示・非表示を切り替える(合成する画像自体は常に同じ)。
     private void RecomposePreview()
     {
         RefreshOverrideSummaries();
-        PreviewImage = _compositionService.Compose(BuildCompositionRequest(HighlightOverridesEnabled));
+        var result = _compositionService.Compose(BuildCompositionRequest());
+        PreviewImage = result.Image;
+        TitleAnnotations = BuildAnnotations(TitleOverrideSummaries, result.TitleBounds);
+        DescriptionAnnotations = BuildAnnotations(DescriptionOverrideSummaries, result.DescriptionBounds);
     }
 
-    private CardCompositionRequest BuildCompositionRequest(bool highlightOverrides)
+    // 番号(OverrideSummary、開始位置順)と矩形(OverrideBounds、CardTextRendererの描画結果)を、
+    // 同じOverrideを指すもの同士で対応付ける。
+    private static IReadOnlyList<OverrideAnnotation> BuildAnnotations(IReadOnlyList<OverrideSummary> summaries, IReadOnlyList<OverrideBounds> bounds) =>
+        summaries
+            .Select(s => new { s.Number, s.Override, Match = bounds.FirstOrDefault(b => b.Override == s.Override) })
+            .Where(x => x.Match is not null)
+            .Select(x => new OverrideAnnotation(x.Number, x.Match!.Bounds, x.Override))
+            .ToList();
+
+    private CardCompositionRequest BuildCompositionRequest()
     {
         var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleState.FontFamilyName),
             _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold, _titleState.Overrides);
@@ -874,7 +956,8 @@ public partial class MainViewModel : ObservableObject
             DescriptionOverrides = _descriptionState.Overrides,
             DescriptionLineSpacing = _descriptionState.LineSpacing,
             DescriptionRect = new Rect(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight),
-            HighlightOverrides = highlightOverrides,
+            DefaultDividerStyle = DividerStyle.Default,
+            DividerOverrides = _descriptionDividerOverrides,
         };
     }
 

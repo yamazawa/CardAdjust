@@ -27,9 +27,12 @@ public class CardCompositionService
         return image;
     }
 
-    public BitmapSource Compose(CardCompositionRequest request)
+    public CardCompositionResult Compose(CardCompositionRequest request)
     {
         var canvasRect = new Rect(0, 0, CardTemplateLayout.TemplateWidth, CardTemplateLayout.TemplateHeight);
+
+        IReadOnlyList<OverrideBounds> titleBounds = [];
+        IReadOnlyList<OverrideBounds> descriptionBounds = [];
 
         var visual = new DrawingVisual();
         using (var context = visual.RenderOpen())
@@ -38,18 +41,19 @@ public class CardCompositionService
 
             DrawIllustration(context, request.IllustrationImage, request.IllustrationRect, request.KeepIllustrationAspectRatio);
 
-            _textRenderer.DrawCenteredSingleLine(context, request.TitleText, request.TitleCharacterStyles,
-                request.TitleRect, Brushes.White, request.HighlightOverrides, request.TitleOverrides);
+            titleBounds = _textRenderer.DrawCenteredSingleLine(context, request.TitleText, request.TitleCharacterStyles,
+                request.TitleRect, Brushes.White, request.TitleOverrides);
 
-            _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, request.DescriptionCharacterStyles,
-                request.DescriptionRect, request.DescriptionLineSpacing, Brushes.White, request.HighlightOverrides, request.DescriptionOverrides);
+            descriptionBounds = _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, request.DescriptionCharacterStyles,
+                request.DescriptionRect, request.DescriptionLineSpacing, Brushes.White, request.DescriptionOverrides,
+                request.DefaultDividerStyle, request.DividerOverrides);
         }
 
         var bitmap = new RenderTargetBitmap(
             (int)canvasRect.Width, (int)canvasRect.Height, 96, 96, PixelFormats.Pbgra32);
         bitmap.Render(visual);
         bitmap.Freeze();
-        return bitmap;
+        return new CardCompositionResult(bitmap, titleBounds, descriptionBounds);
     }
 
     // 縦横比をキープしない場合は表示矩形いっぱいに引き伸ばす。

@@ -295,11 +295,47 @@ namespace CardAdjust.Resources {
         }
 
         /// <summary>
-        ///   個別設定を色分け表示 に類似しているローカライズされた文字列を検索します。
+        ///   ガイドを表示 に類似しているローカライズされた文字列を検索します。
         /// </summary>
-        public static string Label_HighlightOverrides {
+        public static string Label_ShowGuide {
             get {
-                return ResourceManager.GetString("Label_HighlightOverrides", resourceCulture);
+                return ResourceManager.GetString("Label_ShowGuide", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   水平線 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_Divider {
+            get {
+                return ResourceManager.GetString("Label_Divider", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   太さ に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_DividerThickness {
+            get {
+                return ResourceManager.GetString("Label_DividerThickness", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   上余白 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_DividerMarginTop {
+            get {
+                return ResourceManager.GetString("Label_DividerMarginTop", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   下余白 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_DividerMarginBottom {
+            get {
+                return ResourceManager.GetString("Label_DividerMarginBottom", resourceCulture);
             }
         }
     }

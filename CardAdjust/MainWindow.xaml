@@ -18,6 +18,7 @@
     <Window.Resources>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <conv:RegionOverrideBrushConverter x:Key="RegionOverrideBrushConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
     <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}"
           Background="Transparent"
@@ -197,8 +198,8 @@
         <DockPanel Grid.Row="1" Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_Preview}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
-            <CheckBox DockPanel.Dock="Top" Content="{x:Static resx:Strings.Label_HighlightOverrides}"
-                      IsChecked="{Binding HighlightOverridesEnabled}"
+            <CheckBox DockPanel.Dock="Top" Content="{x:Static resx:Strings.Label_ShowGuide}"
+                      IsChecked="{Binding ShowGuide}"
                       Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <Button DockPanel.Dock="Bottom" Content="{x:Static resx:Strings.Button_Save}"
                     HorizontalAlignment="Right" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
@@ -212,6 +213,7 @@
                         <Border Canvas.Left="{Binding TitleDestX, Mode=TwoWay}" Canvas.Top="{Binding TitleDestY, Mode=TwoWay}"
                                 Width="{Binding TitleDestWidth, Mode=TwoWay}" Height="{Binding TitleDestHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsTitleDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
@@ -253,6 +255,7 @@
                         <Border Canvas.Left="{Binding IllustrationDestX, Mode=TwoWay}" Canvas.Top="{Binding IllustrationDestY, Mode=TwoWay}"
                                 Width="{Binding IllustrationDestWidth, Mode=TwoWay}" Height="{Binding IllustrationDestHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsIllustrationDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
@@ -294,6 +297,7 @@
                         <Border Canvas.Left="{Binding DescriptionDestX, Mode=TwoWay}" Canvas.Top="{Binding DescriptionDestY, Mode=TwoWay}"
                                 Width="{Binding DescriptionDestWidth, Mode=TwoWay}" Height="{Binding DescriptionDestHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsDescriptionDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
@@ -332,6 +336,58 @@
                                            behaviors:ResizeHandleBehavior.Direction="BottomRight" />
                             </Grid>
                         </Border>
+
+                        <!-- 個別設定の番号付き矩形。クリックすると調整ダイアログを開く。矩形表示より手前(後に描画)に重ねる。 -->
+                        <ItemsControl ItemsSource="{Binding TitleAnnotations}"
+                                      Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding Bounds.X}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding Bounds.Y}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Number}" Width="{Binding Bounds.Width}" Height="{Binding Bounds.Height}"
+                                            MinWidth="0" MinHeight="0" Padding="0"
+                                            FontSize="{x:Static styles:LayoutConstants.AnnotationNumberFontSize}" FontWeight="Bold"
+                                            Foreground="Yellow" Background="Transparent" BorderBrush="Yellow" BorderThickness="1.5"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.AdjustTitleOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Override}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding DescriptionAnnotations}"
+                                      Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding Bounds.X}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding Bounds.Y}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Number}" Width="{Binding Bounds.Width}" Height="{Binding Bounds.Height}"
+                                            MinWidth="0" MinHeight="0" Padding="0"
+                                            FontSize="{x:Static styles:LayoutConstants.AnnotationNumberFontSize}" FontWeight="Bold"
+                                            Foreground="Yellow" Background="Transparent" BorderBrush="Yellow" BorderThickness="1.5"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.AdjustDescriptionOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Override}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </Canvas>
                 </Grid>
             </Viewbox>
@@ -356,20 +412,6 @@
                             Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                             Command="{Binding AdjustTitleCommand}" />
                 </StackPanel>
-                <!-- 個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。 -->
-                <ItemsControl ItemsSource="{Binding TitleOverrideSummaries}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
-                                           Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
-                                <Button Content="{x:Static resx:Strings.Button_Adjust}"
-                                        Command="{Binding DataContext.AdjustTitleOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
             </StackPanel>
 
             <StackPanel Margin="{x:Static styles:LayoutConstants.ElementSpacing}">
@@ -411,20 +453,6 @@
                             Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
                             Command="{Binding AdjustDescriptionCommand}" />
                 </StackPanel>
-                <!-- 個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。 -->
-                <ItemsControl ItemsSource="{Binding DescriptionOverrideSummaries}" Margin="{x:Static styles:LayoutConstants.FieldSpacing}">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Label}" VerticalAlignment="Center"
-                                           Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
-                                <Button Content="{x:Static resx:Strings.Button_Adjust}"
-                                        Command="{Binding DataContext.AdjustDescriptionOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
             </StackPanel>
         </StackPanel>
     </Grid>
