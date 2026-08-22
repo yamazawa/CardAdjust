@@ -136,8 +136,8 @@
   <data name="Button_BatchExport" xml:space="preserve">
     <value>一斉出力</value>
   </data>
-  <data name="Label_HighlightOverrides" xml:space="preserve">
-    <value>個別設定を色分け表示</value>
+  <data name="Label_ShowGuide" xml:space="preserve">
+    <value>ガイドを表示</value>
   </data>
   <data name="Label_Divider" xml:space="preserve">
     <value>水平線</value>

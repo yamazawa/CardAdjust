@@ -18,6 +18,7 @@
     <Window.Resources>
         <conv:InverseBooleanConverter x:Key="InverseBooleanConverter" />
         <conv:RegionOverrideBrushConverter x:Key="RegionOverrideBrushConverter" />
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
     </Window.Resources>
     <Grid Margin="{x:Static styles:LayoutConstants.RootMargin}"
           Background="Transparent"
@@ -197,8 +198,8 @@
         <DockPanel Grid.Row="1" Grid.Column="2" Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_Preview}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
-            <CheckBox DockPanel.Dock="Top" Content="{x:Static resx:Strings.Label_HighlightOverrides}"
-                      IsChecked="{Binding HighlightOverridesEnabled}"
+            <CheckBox DockPanel.Dock="Top" Content="{x:Static resx:Strings.Label_ShowGuide}"
+                      IsChecked="{Binding ShowGuide}"
                       Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <Button DockPanel.Dock="Bottom" Content="{x:Static resx:Strings.Button_Save}"
                     HorizontalAlignment="Right" Margin="{x:Static styles:LayoutConstants.ButtonSpacing}"
@@ -212,6 +213,7 @@
                         <Border Canvas.Left="{Binding TitleDestX, Mode=TwoWay}" Canvas.Top="{Binding TitleDestY, Mode=TwoWay}"
                                 Width="{Binding TitleDestWidth, Mode=TwoWay}" Height="{Binding TitleDestHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsTitleDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
@@ -253,6 +255,7 @@
                         <Border Canvas.Left="{Binding IllustrationDestX, Mode=TwoWay}" Canvas.Top="{Binding IllustrationDestY, Mode=TwoWay}"
                                 Width="{Binding IllustrationDestWidth, Mode=TwoWay}" Height="{Binding IllustrationDestHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsIllustrationDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
@@ -294,6 +297,7 @@
                         <Border Canvas.Left="{Binding DescriptionDestX, Mode=TwoWay}" Canvas.Top="{Binding DescriptionDestY, Mode=TwoWay}"
                                 Width="{Binding DescriptionDestWidth, Mode=TwoWay}" Height="{Binding DescriptionDestHeight, Mode=TwoWay}"
                                 BorderBrush="{Binding IsDescriptionDestRegionIndividual, Converter={StaticResource RegionOverrideBrushConverter}}"
+                                Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}"
                                 BorderThickness="3" Background="Transparent" Cursor="SizeAll"
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>

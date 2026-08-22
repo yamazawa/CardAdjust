@@ -295,11 +295,11 @@ namespace CardAdjust.Resources {
         }
 
         /// <summary>
-        ///   個別設定を色分け表示 に類似しているローカライズされた文字列を検索します。
+        ///   ガイドを表示 に類似しているローカライズされた文字列を検索します。
         /// </summary>
-        public static string Label_HighlightOverrides {
+        public static string Label_ShowGuide {
             get {
-                return ResourceManager.GetString("Label_HighlightOverrides", resourceCulture);
+                return ResourceManager.GetString("Label_ShowGuide", resourceCulture);
             }
         }
 

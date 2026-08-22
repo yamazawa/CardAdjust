@@ -211,9 +211,9 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _batchExportFolder;
 
-    // 個別調整による上書きをプレビュー画面上で色分け表示するか。次回起動時も保持する。
+    // プレビュー画面上に、個別設定の番号付き矩形・貼付先矩形などのガイドを表示するか。次回起動時も保持する。
     [ObservableProperty]
-    private bool _highlightOverridesEnabled;
+    private bool _showGuide;
 
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
@@ -252,7 +252,7 @@ public partial class MainViewModel : ObservableObject
         _windowWidth = settings.WindowWidth;
         _windowHeight = settings.WindowHeight;
         _batchExportFolder = settings.BatchExportFolder;
-        _highlightOverridesEnabled = settings.HighlightOverridesEnabled;
+        _showGuide = settings.ShowGuide;
 
         // OnSelectedCardChangedがRecomposePreviewを呼ぶ可能性があるため、
         // カード一覧の読み込みより先にフレームテンプレートを読み込んでおく。
@@ -856,7 +856,7 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnBatchExportFolderChanged(string value) => MarkSettingsDirty();
 
-    partial void OnHighlightOverridesEnabledChanged(bool value)
+    partial void OnShowGuideChanged(bool value)
     {
         MarkSettingsDirty();
         RecomposePreview();
@@ -882,7 +882,7 @@ public partial class MainViewModel : ObservableObject
         _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
             _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold,
             _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing, _descriptionState.IsBold,
-            BatchExportFolder, HighlightOverridesEnabled));
+            BatchExportFolder, ShowGuide));
     }
 
     /// <summary>
@@ -909,12 +909,12 @@ public partial class MainViewModel : ObservableObject
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
         _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList(), _descriptionDividerOverrides.ToList());
 
-    // プレビューではHighlightOverridesEnabledに応じて個別調整による上書きを色分け表示する。
-    // 保存・一斉出力では色分け表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
+    // プレビューではShowGuideに応じて個別調整による上書きの番号付き矩形などのガイドを表示する。
+    // 保存・一斉出力では表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
     private void RecomposePreview()
     {
         RefreshOverrideSummaries();
-        PreviewImage = _compositionService.Compose(BuildCompositionRequest(HighlightOverridesEnabled));
+        PreviewImage = _compositionService.Compose(BuildCompositionRequest(ShowGuide));
     }
 
     private CardCompositionRequest BuildCompositionRequest(bool highlightOverrides)
