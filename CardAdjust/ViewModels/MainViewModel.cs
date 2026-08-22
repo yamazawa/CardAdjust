@@ -35,6 +35,10 @@ public partial class MainViewModel : ObservableObject
     // カードの読込・復元中はユーザー操作ではないため、MarkLayoutDirtyを抑制するためのガード。
     private bool _isRestoringLayout;
 
+    // 直前のテキスト。文字入力で増えた区間を検出し、個別設定(Overrides)を追従させるために保持する。
+    private string _previousTitleText = string.Empty;
+    private string _previousDescriptionText = string.Empty;
+
     // ②タイトル・④説明文の統一レイアウト設定＋文字区間ごとの個別上書き。互いに別に保持する。
     private readonly TextElementState _titleState;
     private readonly TextElementState _descriptionState;
@@ -64,6 +68,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _titleSelectionLength;
 
+    // ②タイトルの個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。
+    [ObservableProperty]
+    private IReadOnlyList<OverrideSummary> _titleOverrideSummaries = [];
+
+    // ②タイトルの読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isTitleRegionIndividual;
+
     // ②タイトルの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
     private double _titleRegionX = CardTemplateLayout.TitleX;
@@ -77,6 +89,23 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _titleRegionHeight = CardTemplateLayout.TitleHeight;
 
+    // ②タイトルの貼付先矩形(プレビュー上)が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isTitleDestRegionIndividual;
+
+    // ②タイトルの貼付先矩形。プレビュー上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _titleDestX = CardTemplateLayout.TitleX;
+
+    [ObservableProperty]
+    private double _titleDestY = CardTemplateLayout.TitleY;
+
+    [ObservableProperty]
+    private double _titleDestWidth = CardTemplateLayout.TitleWidth;
+
+    [ObservableProperty]
+    private double _titleDestHeight = CardTemplateLayout.TitleHeight;
+
     // ③イラストの切り抜き画像。読取ボタンを押したときのみ更新する。
     [ObservableProperty]
     private BitmapSource? _illustrationImage;
@@ -84,6 +113,10 @@ public partial class MainViewModel : ObservableObject
     // ③イラストの縦横比キープ有無。初期値はキープしない。
     [ObservableProperty]
     private bool _keepIllustrationAspectRatio;
+
+    // ③イラストの読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isIllustrationRegionIndividual;
 
     // ③イラストの読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
@@ -98,6 +131,23 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _illustrationRegionHeight = CardTemplateLayout.IllustrationHeight;
 
+    // ③イラストの貼付先矩形(プレビュー上)が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isIllustrationDestRegionIndividual;
+
+    // ③イラストの貼付先矩形。プレビュー上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _illustrationDestX = CardTemplateLayout.IllustrationX;
+
+    [ObservableProperty]
+    private double _illustrationDestY = CardTemplateLayout.IllustrationY;
+
+    [ObservableProperty]
+    private double _illustrationDestWidth = CardTemplateLayout.IllustrationWidth;
+
+    [ObservableProperty]
+    private double _illustrationDestHeight = CardTemplateLayout.IllustrationHeight;
+
     // ④説明文の文字列。複数行はテキストボックスの改行(\n)で区切る。
     [ObservableProperty]
     private string _descriptionText = string.Empty;
@@ -108,6 +158,14 @@ public partial class MainViewModel : ObservableObject
 
     [ObservableProperty]
     private int _descriptionSelectionLength;
+
+    // ④説明文の個別設定一覧。プレビュー上の番号付き矩形と同じ番号で対応する。
+    [ObservableProperty]
+    private IReadOnlyList<OverrideSummary> _descriptionOverrideSummaries = [];
+
+    // ④説明文の読取矩形が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isDescriptionRegionIndividual;
 
     // ④説明文の読取矩形。元画像上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
     [ObservableProperty]
@@ -122,6 +180,23 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private double _descriptionRegionHeight = CardTemplateLayout.DescriptionHeight;
 
+    // ④説明文の貼付先矩形(プレビュー上)が、このカードで個別設定されているか(falseなら全体設定を使用中)。
+    [ObservableProperty]
+    private bool _isDescriptionDestRegionIndividual;
+
+    // ④説明文の貼付先矩形。プレビュー上のドラッグ(位置)・リサイズ(幅高さ別々)で調整する(初期値はCardTemplateLayout)。
+    [ObservableProperty]
+    private double _descriptionDestX = CardTemplateLayout.DescriptionX;
+
+    [ObservableProperty]
+    private double _descriptionDestY = CardTemplateLayout.DescriptionY;
+
+    [ObservableProperty]
+    private double _descriptionDestWidth = CardTemplateLayout.DescriptionWidth;
+
+    [ObservableProperty]
+    private double _descriptionDestHeight = CardTemplateLayout.DescriptionHeight;
+
     [ObservableProperty]
     private double _windowWidth;
 
@@ -131,6 +206,10 @@ public partial class MainViewModel : ObservableObject
     // 一斉出力の出力先フォルダパス。次回起動時も保持する。
     [ObservableProperty]
     private string _batchExportFolder;
+
+    // 個別調整による上書きをプレビュー画面上で色分け表示するか。次回起動時も保持する。
+    [ObservableProperty]
+    private bool _highlightOverridesEnabled;
 
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
@@ -167,6 +246,7 @@ public partial class MainViewModel : ObservableObject
         _windowWidth = settings.WindowWidth;
         _windowHeight = settings.WindowHeight;
         _batchExportFolder = settings.BatchExportFolder;
+        _highlightOverridesEnabled = settings.HighlightOverridesEnabled;
 
         // OnSelectedCardChangedがRecomposePreviewを呼ぶ可能性があるため、
         // カード一覧の読み込みより先にフレームテンプレートを読み込んでおく。
@@ -203,6 +283,18 @@ public partial class MainViewModel : ObservableObject
     /// </summary>
     [RelayCommand]
     private void AdjustTitle() => OpenAdjustDialog(TitleText, TitleSelectionStart, TitleSelectionLength, _titleState, showLineSpacing: false);
+
+    /// <summary>
+    /// 個別設定一覧の番号から、対象のOverridesを直接編集する
+    /// </summary>
+    [RelayCommand]
+    private void AdjustTitleOverride(OverrideSummary? summary)
+    {
+        if (summary is null)
+            return;
+
+        OpenAdjustDialog(TitleText, summary.Override.Start, summary.Override.Length, _titleState, showLineSpacing: false);
+    }
 
     /// <summary>
     /// イラスト領域を矩形で切り抜き、表示矩形に貼り付ける
@@ -246,19 +338,35 @@ public partial class MainViewModel : ObservableObject
         OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
 
     /// <summary>
-    /// プレビュー(①～④を合成した完成画像)を保存先を選んでPNGとして保存する
+    /// 個別設定一覧の番号から、対象のOverridesを直接編集する
+    /// </summary>
+    [RelayCommand]
+    private void AdjustDescriptionOverride(OverrideSummary? summary)
+    {
+        if (summary is null)
+            return;
+
+        OpenAdjustDialog(DescriptionText, summary.Override.Start, summary.Override.Length, _descriptionState, showLineSpacing: true);
+    }
+
+    /// <summary>
+    /// ①～④を合成した完成画像を保存先を選んでPNGとして保存する
+    ///
+    /// プレビュー画面の個別設定の色分け表示(HighlightOverrides)は、
+    /// 編集用の表示のため保存画像には反映しない。
     /// </summary>
     [RelayCommand]
     private void SaveImage()
     {
-        if (PreviewImage is null || SelectedCard is null)
+        if (SelectedCard is null)
             return;
 
         var filePath = _saveFileDialogService.ShowSavePngDialog($"{SelectedCard.DisplayName}.png");
         if (filePath is null)
             return;
 
-        _imageSaveService.SaveAsPng(PreviewImage, filePath);
+        var image = _compositionService.Compose(BuildCompositionRequest(highlightOverrides: false));
+        _imageSaveService.SaveAsPng(image, filePath);
     }
 
     /// <summary>
@@ -286,16 +394,15 @@ public partial class MainViewModel : ObservableObject
         var isCommon = selectionLength <= 0;
         var start = isCommon ? 0 : selectionStart;
         var length = isCommon ? 0 : selectionLength;
-        var targetLabel = isCommon ? Strings.Label_CommonSetting : text.Substring(start, length);
         var existing = isCommon ? null : state.Overrides.FirstOrDefault(o => o.Start == start && o.Length == length);
 
-        var viewModel = new AdjustDialogViewModel(
+        var viewModel = new AdjustDialogViewModel(text,
             existing?.FontFamilyName ?? state.FontFamilyName,
             existing?.FontSize ?? state.FontSize,
             existing?.LetterSpacing ?? state.LetterSpacing,
             existing?.IsBold ?? state.IsBold,
             state.LineSpacing,
-            showLineSpacing, isCommon, targetLabel);
+            showLineSpacing, isCommon, start, length);
 
         var snapshotFontFamilyName = state.FontFamilyName;
         var snapshotFontSize = state.FontSize;
@@ -304,8 +411,12 @@ public partial class MainViewModel : ObservableObject
         var snapshotLineSpacing = state.LineSpacing;
         var snapshotOverrides = state.Overrides.ToList();
 
-        viewModel.LiveChanged += () => ApplyAdjustLive(state, isCommon, start, length, viewModel);
-        viewModel.ClearRequested += () => state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
+        // 個別設定はダイアログ内で開始位置・文字数(範囲)自体も変更できるため、
+        // 「現在この区間に対応するOverridesの位置」を保持し、範囲変更のたびに追従させる。
+        var range = new RangeTracker(start, length);
+
+        viewModel.LiveChanged += () => ApplyAdjustLive(state, isCommon, range, viewModel);
+        viewModel.ClearRequested += () => state.Overrides.RemoveAll(o => RangesOverlap(o, range.Start, range.Length));
 
         _adjustDialogService.ShowModal(viewModel);
 
@@ -319,7 +430,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     // 行間隔は文字区間の概念に馴染まないため、共通/個別どちらのモードでも常にstate全体へ反映する。
-    private void ApplyAdjustLive(TextElementState state, bool isCommon, int start, int length, AdjustDialogViewModel viewModel)
+    private void ApplyAdjustLive(TextElementState state, bool isCommon, RangeTracker range, AdjustDialogViewModel viewModel)
     {
         state.LineSpacing = viewModel.LineSpacing;
 
@@ -332,8 +443,11 @@ public partial class MainViewModel : ObservableObject
         }
         else
         {
-            state.Overrides.RemoveAll(o => RangesOverlap(o, start, length));
-            state.Overrides.Add(new CharacterStyleOverride(start, length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing, viewModel.IsBold));
+            // 直前の位置にあったOverridesを取り除いてから、ダイアログ側の最新の開始位置・文字数で追加し直す。
+            state.Overrides.RemoveAll(o => RangesOverlap(o, range.Start, range.Length));
+            range.Start = viewModel.Start;
+            range.Length = viewModel.Length;
+            state.Overrides.Add(new CharacterStyleOverride(range.Start, range.Length, viewModel.FontFamilyName, viewModel.FontSize, viewModel.LetterSpacing, viewModel.IsBold));
         }
 
         MarkSettingsDirty();
@@ -386,20 +500,69 @@ public partial class MainViewModel : ObservableObject
         KeepIllustrationAspectRatio = layout?.KeepIllustrationAspectRatio ?? false;
     }
 
+    // ③④②それぞれ、個別設定(layoutのRegion)があればそれを使い、無ければ全体設定(CardTemplateLayout)を使う。
     private void RestoreRegions(CardLayout? layout)
     {
-        TitleRegionX = layout?.TitleRegionX ?? CardTemplateLayout.TitleX;
-        TitleRegionY = layout?.TitleRegionY ?? CardTemplateLayout.TitleY;
-        TitleRegionWidth = layout?.TitleRegionWidth ?? CardTemplateLayout.TitleWidth;
-        TitleRegionHeight = layout?.TitleRegionHeight ?? CardTemplateLayout.TitleHeight;
-        IllustrationRegionX = layout?.IllustrationRegionX ?? CardTemplateLayout.IllustrationX;
-        IllustrationRegionY = layout?.IllustrationRegionY ?? CardTemplateLayout.IllustrationY;
-        IllustrationRegionWidth = layout?.IllustrationRegionWidth ?? CardTemplateLayout.IllustrationWidth;
-        IllustrationRegionHeight = layout?.IllustrationRegionHeight ?? CardTemplateLayout.IllustrationHeight;
-        DescriptionRegionX = layout?.DescriptionRegionX ?? CardTemplateLayout.DescriptionX;
-        DescriptionRegionY = layout?.DescriptionRegionY ?? CardTemplateLayout.DescriptionY;
-        DescriptionRegionWidth = layout?.DescriptionRegionWidth ?? CardTemplateLayout.DescriptionWidth;
-        DescriptionRegionHeight = layout?.DescriptionRegionHeight ?? CardTemplateLayout.DescriptionHeight;
+        RestoreTitleRegion(layout?.TitleRegion);
+        RestoreIllustrationRegion(layout?.IllustrationRegion);
+        RestoreDescriptionRegion(layout?.DescriptionRegion);
+        RestoreTitleDestRegion(layout?.TitleDestRegion);
+        RestoreIllustrationDestRegion(layout?.IllustrationDestRegion);
+        RestoreDescriptionDestRegion(layout?.DescriptionDestRegion);
+    }
+
+    private void RestoreTitleRegion(RegionOverride? region)
+    {
+        IsTitleRegionIndividual = region is not null;
+        TitleRegionX = region?.X ?? CardTemplateLayout.TitleX;
+        TitleRegionY = region?.Y ?? CardTemplateLayout.TitleY;
+        TitleRegionWidth = region?.Width ?? CardTemplateLayout.TitleWidth;
+        TitleRegionHeight = region?.Height ?? CardTemplateLayout.TitleHeight;
+    }
+
+    private void RestoreIllustrationRegion(RegionOverride? region)
+    {
+        IsIllustrationRegionIndividual = region is not null;
+        IllustrationRegionX = region?.X ?? CardTemplateLayout.IllustrationX;
+        IllustrationRegionY = region?.Y ?? CardTemplateLayout.IllustrationY;
+        IllustrationRegionWidth = region?.Width ?? CardTemplateLayout.IllustrationWidth;
+        IllustrationRegionHeight = region?.Height ?? CardTemplateLayout.IllustrationHeight;
+    }
+
+    private void RestoreDescriptionRegion(RegionOverride? region)
+    {
+        IsDescriptionRegionIndividual = region is not null;
+        DescriptionRegionX = region?.X ?? CardTemplateLayout.DescriptionX;
+        DescriptionRegionY = region?.Y ?? CardTemplateLayout.DescriptionY;
+        DescriptionRegionWidth = region?.Width ?? CardTemplateLayout.DescriptionWidth;
+        DescriptionRegionHeight = region?.Height ?? CardTemplateLayout.DescriptionHeight;
+    }
+
+    private void RestoreTitleDestRegion(RegionOverride? region)
+    {
+        IsTitleDestRegionIndividual = region is not null;
+        TitleDestX = region?.X ?? CardTemplateLayout.TitleX;
+        TitleDestY = region?.Y ?? CardTemplateLayout.TitleY;
+        TitleDestWidth = region?.Width ?? CardTemplateLayout.TitleWidth;
+        TitleDestHeight = region?.Height ?? CardTemplateLayout.TitleHeight;
+    }
+
+    private void RestoreIllustrationDestRegion(RegionOverride? region)
+    {
+        IsIllustrationDestRegionIndividual = region is not null;
+        IllustrationDestX = region?.X ?? CardTemplateLayout.IllustrationX;
+        IllustrationDestY = region?.Y ?? CardTemplateLayout.IllustrationY;
+        IllustrationDestWidth = region?.Width ?? CardTemplateLayout.IllustrationWidth;
+        IllustrationDestHeight = region?.Height ?? CardTemplateLayout.IllustrationHeight;
+    }
+
+    private void RestoreDescriptionDestRegion(RegionOverride? region)
+    {
+        IsDescriptionDestRegionIndividual = region is not null;
+        DescriptionDestX = region?.X ?? CardTemplateLayout.DescriptionX;
+        DescriptionDestY = region?.Y ?? CardTemplateLayout.DescriptionY;
+        DescriptionDestWidth = region?.Width ?? CardTemplateLayout.DescriptionWidth;
+        DescriptionDestHeight = region?.Height ?? CardTemplateLayout.DescriptionHeight;
     }
 
     // 文字区間ごとの個別上書きも、SP2からはカードごとの保存対象になる。
@@ -414,6 +577,10 @@ public partial class MainViewModel : ObservableObject
 
     partial void OnTitleTextChanged(string value)
     {
+        if (!_isRestoringLayout)
+            ShiftOverridesForTextChange(_titleState.Overrides, _previousTitleText, value);
+        _previousTitleText = value;
+
         MarkLayoutDirty();
         RecomposePreview();
     }
@@ -432,44 +599,203 @@ public partial class MainViewModel : ObservableObject
 
         // AcceptsReturn=TrueのTextBoxはEnter入力時に\r\nを挿入するため、
         // 個別調整の区間位置が\nのみの想定とずれないよう正規化する。
+        // (正規化前の\r\n混じりの値ではOverridesを追従させない。正規化後に1回だけ行う。)
         if (value.Contains('\r'))
         {
             DescriptionText = value.Replace("\r\n", "\n").Replace('\r', '\n');
             return;
         }
 
+        if (!_isRestoringLayout)
+            ShiftOverridesForTextChange(_descriptionState.Overrides, _previousDescriptionText, value);
+        _previousDescriptionText = value;
+
         RecomposePreview();
     }
 
-    partial void OnTitleRegionXChanged(double value) => MarkLayoutDirty();
+    // 文字入力・削除でテキストの長さが変わった場合、変化した区間の位置に応じて個別設定(Overrides)を追従させる。
+    private static void ShiftOverridesForTextChange(List<CharacterStyleOverride> overrides, string oldText, string newText)
+    {
+        if (newText.Length > oldText.Length)
+            ShiftOverridesForInsertion(overrides, oldText, newText);
+        else if (newText.Length < oldText.Length)
+            ShiftOverridesForDeletion(overrides, oldText, newText);
+    }
 
-    partial void OnTitleRegionYChanged(double value) => MarkLayoutDirty();
+    // 増えた区間(insertIndex, insertedCount)を含む個別設定は文字数を増やし、
+    // それより開始位置が後ろの個別設定は開始位置をずらす。
+    private static void ShiftOverridesForInsertion(List<CharacterStyleOverride> overrides, string oldText, string newText)
+    {
+        var insertIndex = CommonPrefixLength(oldText, newText);
+        var insertedCount = newText.Length - oldText.Length;
 
-    partial void OnTitleRegionWidthChanged(double value) => MarkLayoutDirty();
+        for (var i = 0; i < overrides.Count; i++)
+        {
+            var o = overrides[i];
+            if (insertIndex >= o.Start && insertIndex < o.Start + o.Length)
+                overrides[i] = o with { Length = o.Length + insertedCount };
+            else if (insertIndex < o.Start)
+                overrides[i] = o with { Start = o.Start + insertedCount };
+        }
+    }
 
-    partial void OnTitleRegionHeightChanged(double value) => MarkLayoutDirty();
+    // 削除された区間([deleteIndex, deleteIndex+deletedCount))と重なる個別設定は、
+    // 重なった分だけ文字数を減らし(削除区間内に開始位置があれば削除区間の先頭まで縮める)、
+    // 削除区間より開始位置が後ろの個別設定は開始位置をずらす。
+    // 縮んだ結果、文字数が0以下になった個別設定は削除する。
+    private static void ShiftOverridesForDeletion(List<CharacterStyleOverride> overrides, string oldText, string newText)
+    {
+        var deleteIndex = CommonPrefixLength(oldText, newText);
+        var deletedCount = oldText.Length - newText.Length;
 
-    partial void OnIllustrationRegionXChanged(double value) => MarkLayoutDirty();
+        for (var i = 0; i < overrides.Count; i++)
+        {
+            var o = overrides[i];
+            var newStart = MapPositionAfterDeletion(o.Start, deleteIndex, deletedCount);
+            var newEnd = MapPositionAfterDeletion(o.Start + o.Length, deleteIndex, deletedCount);
+            overrides[i] = o with { Start = newStart, Length = newEnd - newStart };
+        }
 
-    partial void OnIllustrationRegionYChanged(double value) => MarkLayoutDirty();
+        overrides.RemoveAll(o => o.Length <= 0);
+    }
 
-    partial void OnIllustrationRegionWidthChanged(double value) => MarkLayoutDirty();
+    // 削除前の位置(position)が、削除後のテキストでどの位置に対応するかを求める。
+    // 削除区間の内側にあった位置は、削除区間の先頭(deleteIndex)へ収束させる。
+    private static int MapPositionAfterDeletion(int position, int deleteIndex, int deletedCount)
+    {
+        if (position <= deleteIndex)
+            return position;
 
-    partial void OnIllustrationRegionHeightChanged(double value) => MarkLayoutDirty();
+        return position >= deleteIndex + deletedCount ? position - deletedCount : deleteIndex;
+    }
 
-    partial void OnDescriptionRegionXChanged(double value) => MarkLayoutDirty();
+    private static int CommonPrefixLength(string a, string b)
+    {
+        var max = Math.Min(a.Length, b.Length);
+        var i = 0;
+        while (i < max && a[i] == b[i])
+            i++;
 
-    partial void OnDescriptionRegionYChanged(double value) => MarkLayoutDirty();
+        return i;
+    }
 
-    partial void OnDescriptionRegionWidthChanged(double value) => MarkLayoutDirty();
+    partial void OnTitleRegionXChanged(double value) => MarkTitleRegionIndividual();
 
-    partial void OnDescriptionRegionHeightChanged(double value) => MarkLayoutDirty();
+    partial void OnTitleRegionYChanged(double value) => MarkTitleRegionIndividual();
+
+    partial void OnTitleRegionWidthChanged(double value) => MarkTitleRegionIndividual();
+
+    partial void OnTitleRegionHeightChanged(double value) => MarkTitleRegionIndividual();
+
+    partial void OnIllustrationRegionXChanged(double value) => MarkIllustrationRegionIndividual();
+
+    partial void OnIllustrationRegionYChanged(double value) => MarkIllustrationRegionIndividual();
+
+    partial void OnIllustrationRegionWidthChanged(double value) => MarkIllustrationRegionIndividual();
+
+    partial void OnIllustrationRegionHeightChanged(double value) => MarkIllustrationRegionIndividual();
+
+    partial void OnDescriptionRegionXChanged(double value) => MarkDescriptionRegionIndividual();
+
+    partial void OnDescriptionRegionYChanged(double value) => MarkDescriptionRegionIndividual();
+
+    partial void OnDescriptionRegionWidthChanged(double value) => MarkDescriptionRegionIndividual();
+
+    partial void OnDescriptionRegionHeightChanged(double value) => MarkDescriptionRegionIndividual();
+
+    partial void OnTitleDestXChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnTitleDestYChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnTitleDestWidthChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnTitleDestHeightChanged(double value) => MarkTitleDestRegionIndividual();
+
+    partial void OnIllustrationDestXChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnIllustrationDestYChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnIllustrationDestWidthChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnIllustrationDestHeightChanged(double value) => MarkIllustrationDestRegionIndividual();
+
+    partial void OnDescriptionDestXChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    partial void OnDescriptionDestYChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    partial void OnDescriptionDestWidthChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    partial void OnDescriptionDestHeightChanged(double value) => MarkDescriptionDestRegionIndividual();
+
+    // ドラッグ・リサイズ操作(復元中を除く)で、そのカードのその矩形を個別設定へ切り替える。
+    private void MarkTitleRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsTitleRegionIndividual = true;
+        MarkLayoutDirty();
+    }
+
+    private void MarkIllustrationRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsIllustrationRegionIndividual = true;
+        MarkLayoutDirty();
+    }
+
+    private void MarkDescriptionRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsDescriptionRegionIndividual = true;
+        MarkLayoutDirty();
+    }
+
+    private void MarkTitleDestRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsTitleDestRegionIndividual = true;
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
+
+    private void MarkIllustrationDestRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsIllustrationDestRegionIndividual = true;
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
+
+    private void MarkDescriptionDestRegionIndividual()
+    {
+        if (_isRestoringLayout)
+            return;
+
+        IsDescriptionDestRegionIndividual = true;
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
 
     partial void OnWindowWidthChanged(double value) => MarkSettingsDirty();
 
     partial void OnWindowHeightChanged(double value) => MarkSettingsDirty();
 
     partial void OnBatchExportFolderChanged(string value) => MarkSettingsDirty();
+
+    partial void OnHighlightOverridesEnabledChanged(bool value)
+    {
+        MarkSettingsDirty();
+        RecomposePreview();
+    }
 
     private void MarkSettingsDirty() => _settingsDirty = true;
 
@@ -491,7 +817,7 @@ public partial class MainViewModel : ObservableObject
         _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
             _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold,
             _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing, _descriptionState.IsBold,
-            BatchExportFolder));
+            BatchExportFolder, HighlightOverridesEnabled));
     }
 
     /// <summary>
@@ -509,32 +835,66 @@ public partial class MainViewModel : ObservableObject
     }
 
     private CardLayout BuildCurrentLayout() => new(
-        TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight,
-        IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight,
-        DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight,
+        IsTitleRegionIndividual ? new RegionOverride(TitleRegionX, TitleRegionY, TitleRegionWidth, TitleRegionHeight) : null,
+        IsIllustrationRegionIndividual ? new RegionOverride(IllustrationRegionX, IllustrationRegionY, IllustrationRegionWidth, IllustrationRegionHeight) : null,
+        IsDescriptionRegionIndividual ? new RegionOverride(DescriptionRegionX, DescriptionRegionY, DescriptionRegionWidth, DescriptionRegionHeight) : null,
+        IsTitleDestRegionIndividual ? new RegionOverride(TitleDestX, TitleDestY, TitleDestWidth, TitleDestHeight) : null,
+        IsIllustrationDestRegionIndividual ? new RegionOverride(IllustrationDestX, IllustrationDestY, IllustrationDestWidth, IllustrationDestHeight) : null,
+        IsDescriptionDestRegionIndividual ? new RegionOverride(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight) : null,
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
         _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
 
+    // プレビューではHighlightOverridesEnabledに応じて個別調整による上書きを色分け表示する。
+    // 保存・一斉出力では色分け表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
     private void RecomposePreview()
+    {
+        RefreshOverrideSummaries();
+        PreviewImage = _compositionService.Compose(BuildCompositionRequest(HighlightOverridesEnabled));
+    }
+
+    private CardCompositionRequest BuildCompositionRequest(bool highlightOverrides)
     {
         var titleStyles = CharacterStyleBuilder.Build(TitleText, new FontFamily(_titleState.FontFamilyName),
             _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold, _titleState.Overrides);
         var descriptionStyles = CharacterStyleBuilder.Build(DescriptionText, new FontFamily(_descriptionState.FontFamilyName),
             _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.IsBold, _descriptionState.Overrides);
 
-        var request = new CardCompositionRequest
+        return new CardCompositionRequest
         {
             FrameTemplate = _frameTemplate,
             TitleText = TitleText,
             TitleCharacterStyles = titleStyles,
+            TitleOverrides = _titleState.Overrides,
+            TitleRect = new Rect(TitleDestX, TitleDestY, TitleDestWidth, TitleDestHeight),
             IllustrationImage = IllustrationImage,
             KeepIllustrationAspectRatio = KeepIllustrationAspectRatio,
+            IllustrationRect = new Rect(IllustrationDestX, IllustrationDestY, IllustrationDestWidth, IllustrationDestHeight),
             DescriptionText = DescriptionText,
             DescriptionCharacterStyles = descriptionStyles,
+            DescriptionOverrides = _descriptionState.Overrides,
             DescriptionLineSpacing = _descriptionState.LineSpacing,
+            DescriptionRect = new Rect(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight),
+            HighlightOverrides = highlightOverrides,
         };
+    }
 
-        PreviewImage = _compositionService.Compose(request);
+    // 個別設定一覧(番号付き)を、プレビュー上の番号付き矩形と同じ順序(開始位置順)で組み立てる。
+    private void RefreshOverrideSummaries()
+    {
+        TitleOverrideSummaries = BuildOverrideSummaries(TitleText, _titleState.Overrides);
+        DescriptionOverrideSummaries = BuildOverrideSummaries(DescriptionText, _descriptionState.Overrides);
+    }
+
+    private static IReadOnlyList<OverrideSummary> BuildOverrideSummaries(string text, IReadOnlyList<CharacterStyleOverride> overrides) =>
+        overrides.OrderBy(o => o.Start)
+            .Select((o, i) => new OverrideSummary(i + 1, BuildOverrideSummaryLabel(i + 1, text, o), o))
+            .ToList();
+
+    private static string BuildOverrideSummaryLabel(int number, string text, CharacterStyleOverride o)
+    {
+        var start = Math.Clamp(o.Start, 0, text.Length);
+        var length = Math.Clamp(o.Length, 0, text.Length - start);
+        return $"{number}: {text.Substring(start, length)}";
     }
 
     // ②タイトル・④説明文それぞれの、統一設定(共通設定)と文字区間ごとの個別上書きを保持する。
@@ -546,5 +906,13 @@ public partial class MainViewModel : ObservableObject
         public bool IsBold { get; set; }
         public double LineSpacing { get; set; }
         public List<CharacterStyleOverride> Overrides { get; } = [];
+    }
+
+    // 個別調整ダイアログを開いている間、対象のOverridesが現在どの区間にあるかを追跡する。
+    // ダイアログ側で開始位置・文字数(範囲)自体が変更された場合、この位置も追従させる。
+    private sealed class RangeTracker(int start, int length)
+    {
+        public int Start { get; set; } = start;
+        public int Length { get; set; } = length;
     }
 }

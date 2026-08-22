@@ -56,22 +56,29 @@ public class CardBatchExportService
             TitleText = titleText,
             TitleCharacterStyles = CharacterStyleBuilder.Build(titleText, new FontFamily(titleStyle.FontFamilyName),
                 titleStyle.FontSize, titleStyle.LetterSpacing, titleStyle.IsBold, layout?.TitleOverrides ?? []),
+            TitleRect = ResolveRect(layout?.TitleDestRegion, CardTemplateLayout.TitleRect),
             IllustrationImage = CropIllustration(card, layout),
             KeepIllustrationAspectRatio = layout?.KeepIllustrationAspectRatio ?? false,
+            IllustrationRect = ResolveRect(layout?.IllustrationDestRegion, CardTemplateLayout.IllustrationRect),
             DescriptionText = descriptionText,
             DescriptionCharacterStyles = CharacterStyleBuilder.Build(descriptionText, new FontFamily(descriptionStyle.FontFamilyName),
                 descriptionStyle.FontSize, descriptionStyle.LetterSpacing, descriptionStyle.IsBold, layout?.DescriptionOverrides ?? []),
             DescriptionLineSpacing = descriptionLineSpacing,
+            DescriptionRect = ResolveRect(layout?.DescriptionDestRegion, CardTemplateLayout.DescriptionRect),
         };
     }
 
     // イラストは矩形のみ保存対象のため、出力のたびに元画像から切り抜き直す。
-    private static BitmapSource? CropIllustration(CardImage card, CardLayout? layout)
+    // 個別設定(IllustrationRegion)があればそれを使い、無ければ全体設定(CardTemplateLayout)で切り抜く。
+    private static BitmapSource CropIllustration(CardImage card, CardLayout? layout)
     {
-        if (layout is null)
-            return null;
-
-        var rect = new Rect(layout.IllustrationRegionX, layout.IllustrationRegionY, layout.IllustrationRegionWidth, layout.IllustrationRegionHeight);
-        return ImageCropper.Crop(SourceImageLoader.Load(card.FilePath), rect);
+        var region = layout?.IllustrationRegion
+            ?? new RegionOverride(CardTemplateLayout.IllustrationX, CardTemplateLayout.IllustrationY,
+                CardTemplateLayout.IllustrationWidth, CardTemplateLayout.IllustrationHeight);
+        return ImageCropper.Crop(SourceImageLoader.Load(card.FilePath), new Rect(region.X, region.Y, region.Width, region.Height));
     }
+
+    // 個別設定(貼付先矩形)があればそれを使い、無ければ全体設定(CardTemplateLayoutの固定矩形)を使う。
+    private static Rect ResolveRect(RegionOverride? region, Rect fallback) =>
+        region is null ? fallback : new Rect(region.X, region.Y, region.Width, region.Height);
 }

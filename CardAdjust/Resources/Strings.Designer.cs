@@ -205,6 +205,24 @@ namespace CardAdjust.Resources {
         }
 
         /// <summary>
+        ///   開始位置 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_RangeStart {
+            get {
+                return ResourceManager.GetString("Label_RangeStart", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   文字数 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_RangeLength {
+            get {
+                return ResourceManager.GetString("Label_RangeLength", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   行間隔 に類似しているローカライズされた文字列を検索します。
         /// </summary>
         public static string Label_LineSpacing {
@@ -273,6 +291,15 @@ namespace CardAdjust.Resources {
         public static string Button_BatchExport {
             get {
                 return ResourceManager.GetString("Button_BatchExport", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   個別設定を色分け表示 に類似しているローカライズされた文字列を検索します。
+        /// </summary>
+        public static string Label_HighlightOverrides {
+            get {
+                return ResourceManager.GetString("Label_HighlightOverrides", resourceCulture);
             }
         }
     }

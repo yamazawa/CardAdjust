@@ -36,13 +36,13 @@ public class CardCompositionService
         {
             context.DrawImage(request.FrameTemplate, canvasRect);
 
-            DrawIllustration(context, request.IllustrationImage, CardTemplateLayout.IllustrationRect, request.KeepIllustrationAspectRatio);
+            DrawIllustration(context, request.IllustrationImage, request.IllustrationRect, request.KeepIllustrationAspectRatio);
 
             _textRenderer.DrawCenteredSingleLine(context, request.TitleText, request.TitleCharacterStyles,
-                CardTemplateLayout.TitleRect, Brushes.White);
+                request.TitleRect, Brushes.White, request.HighlightOverrides, request.TitleOverrides);
 
             _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, request.DescriptionCharacterStyles,
-                CardTemplateLayout.DescriptionRect, request.DescriptionLineSpacing, Brushes.White);
+                request.DescriptionRect, request.DescriptionLineSpacing, Brushes.White, request.HighlightOverrides, request.DescriptionOverrides);
         }
 
         var bitmap = new RenderTargetBitmap(
