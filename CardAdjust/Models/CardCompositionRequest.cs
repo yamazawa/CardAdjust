@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace CardAdjust.Models;
@@ -12,6 +13,9 @@ namespace CardAdjust.Models;
 public sealed class CardCompositionRequest
 {
     public required BitmapImage FrameTemplate { get; init; }
+
+    // タイトル・説明文・水平線の文字色。カードセット(使用カード=白、場のカード=黒)によって異なる。
+    public Brush Foreground { get; init; } = Brushes.White;
 
     public string TitleText { get; init; } = string.Empty;
     public required IReadOnlyList<CharacterStyle> TitleCharacterStyles { get; init; }

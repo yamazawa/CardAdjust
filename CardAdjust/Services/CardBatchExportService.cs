@@ -26,25 +26,25 @@ public class CardBatchExportService
         _imageSaveService = imageSaveService;
     }
 
-    public void ExportAll(IReadOnlyList<CardImage> cards, string outputFolder, BitmapImage frameTemplate,
+    public void ExportAll(IReadOnlyList<CardImage> cards, string outputFolder, BitmapImage frameTemplate, Brush foreground,
         CommonTextStyle titleStyle, CommonTextStyle descriptionStyle, double descriptionLineSpacing)
     {
         Directory.CreateDirectory(outputFolder);
 
         foreach (var card in cards)
-            ExportOne(card, outputFolder, frameTemplate, titleStyle, descriptionStyle, descriptionLineSpacing);
+            ExportOne(card, outputFolder, frameTemplate, foreground, titleStyle, descriptionStyle, descriptionLineSpacing);
     }
 
-    private void ExportOne(CardImage card, string outputFolder, BitmapImage frameTemplate,
+    private void ExportOne(CardImage card, string outputFolder, BitmapImage frameTemplate, Brush foreground,
         CommonTextStyle titleStyle, CommonTextStyle descriptionStyle, double descriptionLineSpacing)
     {
         var layout = _layoutService.TryGet(card.FilePath);
-        var request = BuildRequest(card, layout, frameTemplate, titleStyle, descriptionStyle, descriptionLineSpacing);
+        var request = BuildRequest(card, layout, frameTemplate, foreground, titleStyle, descriptionStyle, descriptionLineSpacing);
         var composed = _compositionService.Compose(request);
         _imageSaveService.SaveAsPng(composed, Path.Combine(outputFolder, $"{card.DisplayName}.png"));
     }
 
-    private CardCompositionRequest BuildRequest(CardImage card, CardLayout? layout, BitmapImage frameTemplate,
+    private CardCompositionRequest BuildRequest(CardImage card, CardLayout? layout, BitmapImage frameTemplate, Brush foreground,
         CommonTextStyle titleStyle, CommonTextStyle descriptionStyle, double descriptionLineSpacing)
     {
         var titleText = layout?.TitleText ?? string.Empty;
@@ -53,6 +53,7 @@ public class CardBatchExportService
         return new CardCompositionRequest
         {
             FrameTemplate = frameTemplate,
+            Foreground = foreground,
             TitleText = titleText,
             TitleCharacterStyles = CharacterStyleBuilder.Build(titleText, new FontFamily(titleStyle.FontFamilyName),
                 titleStyle.FontSize, titleStyle.LetterSpacing, titleStyle.IsBold, layout?.TitleOverrides ?? []),
