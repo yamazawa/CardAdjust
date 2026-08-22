@@ -3,13 +3,14 @@ using System.IO;
 namespace CardAdjust.Services;
 
 /// <summary>
-/// 読み込み対象の使用カードフォルダパスをiniファイルから読み込むサービス
+/// カードセットごとの読み込み対象フォルダパスをiniファイルから読み込むサービス
 ///
 /// %AppData%\CardAdjust(_Debug)\config.ini に保存する。settings.jsonとは別ファイルで管理する。
+/// キーは"CardFolder_{カードセットId}"の形式。
 /// </summary>
 public class CardFolderConfigService
 {
-    private const string CardFolderKey = "CardFolder";
+    private const string KeyPrefix = "CardFolder_";
     private readonly string _configPath;
 
     public CardFolderConfigService()
@@ -20,24 +21,26 @@ public class CardFolderConfigService
     }
 
     /// <summary>
-    /// カードフォルダパスを読み込む
+    /// カードセットIdごとのフォルダパスを読み込む
     ///
-    /// ファイルが無い/値が無い場合は既定値で新規作成して返す。
+    /// ファイルが無い/値が無い場合は、defaultFoldersで新規作成して返す。
     /// </summary>
-    public string LoadOrCreateDefault(string defaultCardFolder)
+    public IReadOnlyDictionary<string, string> LoadOrCreateDefault(IReadOnlyDictionary<string, string> defaultFolders)
     {
         if (TryLoad() is { } loaded)
             return loaded;
 
-        File.WriteAllLines(_configPath, [$"{CardFolderKey}={defaultCardFolder}"]);
-        return defaultCardFolder;
+        var lines = defaultFolders.Select(kv => $"{KeyPrefix}{kv.Key}={kv.Value}");
+        File.WriteAllLines(_configPath, lines);
+        return defaultFolders;
     }
 
-    private string? TryLoad()
+    private Dictionary<string, string>? TryLoad()
     {
         if (!File.Exists(_configPath))
             return null;
 
+        var result = new Dictionary<string, string>();
         foreach (var line in File.ReadAllLines(_configPath))
         {
             var separatorIndex = line.IndexOf('=');
@@ -46,10 +49,10 @@ public class CardFolderConfigService
 
             var key = line[..separatorIndex].Trim();
             var value = line[(separatorIndex + 1)..].Trim();
-            if (key == CardFolderKey && value.Length > 0)
-                return value;
+            if (key.StartsWith(KeyPrefix) && value.Length > 0)
+                result[key[KeyPrefix.Length..]] = value;
         }
 
-        return null;
+        return result.Count > 0 ? result : null;
     }
 }

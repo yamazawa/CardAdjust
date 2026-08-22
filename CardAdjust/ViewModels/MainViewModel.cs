@@ -25,7 +25,8 @@ public partial class MainViewModel : ObservableObject
     private readonly SaveFileDialogService _saveFileDialogService;
     private readonly ImageSaveService _imageSaveService;
     private readonly CardBatchExportService _batchExportService;
-    private readonly BitmapImage _frameTemplate;
+    private readonly CardFolderService _cardFolderService;
+    private BitmapImage _frameTemplate;
     private bool _settingsDirty;
     private bool _layoutDirty;
 
@@ -211,10 +212,17 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _highlightOverridesEnabled;
 
+    // カードセット(フォルダ・テンプレート・文字色の組)一覧。切り替えると全体設定・元画像・プレビューが切り替わる。
+    [ObservableProperty]
+    private IReadOnlyList<CardSet> _cardSets;
+
+    [ObservableProperty]
+    private CardSet _selectedCardSet;
+
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
         ImageSaveService imageSaveService, AppSettingsService settingsService, CardLayoutService layoutService,
-        CardBatchExportService batchExportService, AppSettings settings, string cardFolder)
+        CardBatchExportService batchExportService, AppSettings settings, IReadOnlyList<CardSet> cardSets)
     {
         _settingsService = settingsService;
         _layoutService = layoutService;
@@ -224,6 +232,7 @@ public partial class MainViewModel : ObservableObject
         _saveFileDialogService = saveFileDialogService;
         _imageSaveService = imageSaveService;
         _batchExportService = batchExportService;
+        _cardFolderService = cardFolderService;
 
         _titleState = new TextElementState
         {
@@ -247,14 +256,26 @@ public partial class MainViewModel : ObservableObject
         _windowHeight = settings.WindowHeight;
         _batchExportFolder = settings.BatchExportFolder;
         _highlightOverridesEnabled = settings.HighlightOverridesEnabled;
+        _cardSets = cardSets;
+        _selectedCardSet = cardSets.FirstOrDefault(cs => cs.Id == settings.LastCardSetId) ?? cardSets[0];
 
         // OnSelectedCardChangedがRecomposePreviewを呼ぶ可能性があるため、
         // カード一覧の読み込みより先にフレームテンプレートを読み込んでおく。
-        _frameTemplate = _compositionService.LoadFrameTemplate();
+        _frameTemplate = _compositionService.LoadFrameTemplate(SelectedCardSet.TemplateImageUri);
 
-        _cardList = cardFolderService.LoadCardList(cardFolder);
+        _cardList = cardFolderService.LoadCardList(SelectedCardSet.FolderPath);
         SelectedCard = CardList.FirstOrDefault();
 
+        RecomposePreview();
+    }
+
+    // カードセットを切り替えると、テンプレート・カード一覧を読み直し、先頭のカードを選択する。
+    partial void OnSelectedCardSetChanged(CardSet value)
+    {
+        _frameTemplate = _compositionService.LoadFrameTemplate(value.TemplateImageUri);
+        CardList = _cardFolderService.LoadCardList(value.FolderPath);
+        SelectedCard = CardList.FirstOrDefault();
+        MarkSettingsDirty();
         RecomposePreview();
     }
 
@@ -383,7 +404,8 @@ public partial class MainViewModel : ObservableObject
 
         var titleStyle = new CommonTextStyle(_titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold);
         var descriptionStyle = new CommonTextStyle(_descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.IsBold);
-        _batchExportService.ExportAll(CardList, BatchExportFolder, _frameTemplate, titleStyle, descriptionStyle, _descriptionState.LineSpacing);
+        _batchExportService.ExportAll(CardList, BatchExportFolder, _frameTemplate, SelectedCardSet.TextForeground,
+            titleStyle, descriptionStyle, _descriptionState.LineSpacing);
     }
 
     // 範囲選択が無い場合は共通設定(IsCommonSetting)、ある場合はその区間の個別上書きを編集する。
@@ -817,7 +839,7 @@ public partial class MainViewModel : ObservableObject
         _settingsService.Save(new AppSettings(WindowWidth, WindowHeight,
             _titleState.FontFamilyName, _titleState.FontSize, _titleState.LetterSpacing, _titleState.IsBold,
             _descriptionState.FontFamilyName, _descriptionState.FontSize, _descriptionState.LetterSpacing, _descriptionState.LineSpacing, _descriptionState.IsBold,
-            BatchExportFolder, HighlightOverridesEnabled));
+            BatchExportFolder, HighlightOverridesEnabled, SelectedCardSet.Id));
     }
 
     /// <summary>
@@ -862,6 +884,7 @@ public partial class MainViewModel : ObservableObject
         return new CardCompositionRequest
         {
             FrameTemplate = _frameTemplate,
+            Foreground = SelectedCardSet.TextForeground,
             TitleText = TitleText,
             TitleCharacterStyles = titleStyles,
             TitleOverrides = _titleState.Overrides,

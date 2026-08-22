@@ -1,4 +1,3 @@
-using System.IO;
 using System.Windows;
 using System.Windows.Threading;
 using CardAdjust.Services;
@@ -11,10 +10,6 @@ namespace CardAdjust;
 /// </summary>
 public partial class App : Application
 {
-    // config.iniにカードフォルダの指定が無い場合の既定値。
-    private static readonly string FallbackCardFolder =
-        Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Desktop), "オークションポーカー", "使用カード");
-
     private static readonly TimeSpan AutoSaveInterval = TimeSpan.FromSeconds(1);
 
     private MainViewModel? _viewModel;
@@ -26,7 +21,9 @@ public partial class App : Application
         base.OnStartup(e);
 
         var cardFolderConfigService = new CardFolderConfigService();
-        var cardFolder = cardFolderConfigService.LoadOrCreateDefault(FallbackCardFolder);
+        var defaultFolders = CardSets.All.ToDictionary(cs => cs.Id, cs => cs.FolderPath);
+        var folderOverrides = cardFolderConfigService.LoadOrCreateDefault(defaultFolders);
+        var cardSets = CardSets.All.Select(cs => cs with { FolderPath = folderOverrides.GetValueOrDefault(cs.Id, cs.FolderPath) }).ToList();
 
         _settingsService = new AppSettingsService();
         var appSettings = _settingsService.LoadOrCreateDefault();
@@ -40,7 +37,7 @@ public partial class App : Application
         var layoutService = new CardLayoutService();
         var batchExportService = new CardBatchExportService(layoutService, compositionService, imageSaveService);
         _viewModel = new MainViewModel(cardFolderService, compositionService, ocrService, adjustDialogService,
-            saveFileDialogService, imageSaveService, _settingsService, layoutService, batchExportService, appSettings, cardFolder);
+            saveFileDialogService, imageSaveService, _settingsService, layoutService, batchExportService, appSettings, cardSets);
 
         _autoSaveTimer = new DispatcherTimer { Interval = AutoSaveInterval };
         _autoSaveTimer.Tick += (_, _) =>

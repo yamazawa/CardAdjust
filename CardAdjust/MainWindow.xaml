@@ -49,6 +49,8 @@
                    Margin="{x:Static styles:LayoutConstants.SectionSpacing}">
             <TextBlock DockPanel.Dock="Top" Text="{x:Static resx:Strings.Header_CardList}"
                        FontWeight="Bold" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
+            <ComboBox DockPanel.Dock="Top" ItemsSource="{Binding CardSets}" SelectedItem="{Binding SelectedCardSet}"
+                      DisplayMemberPath="Name" Margin="{x:Static styles:LayoutConstants.FieldSpacing}" />
             <ListBox ItemsSource="{Binding CardList}" SelectedItem="{Binding SelectedCard}"
                      DisplayMemberPath="DisplayName" />
         </DockPanel>

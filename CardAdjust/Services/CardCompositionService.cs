@@ -12,16 +12,15 @@ namespace CardAdjust.Services;
 /// </summary>
 public class CardCompositionService
 {
-    private const string FrameTemplateUri = "pack://application:,,,/image/黒枠線テンプレート.png";
-
     private readonly CardTextRenderer _textRenderer = new();
 
-    public BitmapImage LoadFrameTemplate()
+    // カードセットごとに異なるテンプレート画像(黒枠線/白枠線)を読み込む。
+    public BitmapImage LoadFrameTemplate(string templateImageUri)
     {
         var image = new BitmapImage();
         image.BeginInit();
         image.CacheOption = BitmapCacheOption.OnLoad;
-        image.UriSource = new Uri(FrameTemplateUri);
+        image.UriSource = new Uri(templateImageUri);
         image.EndInit();
         image.Freeze();
         return image;
@@ -39,10 +38,10 @@ public class CardCompositionService
             DrawIllustration(context, request.IllustrationImage, request.IllustrationRect, request.KeepIllustrationAspectRatio);
 
             _textRenderer.DrawCenteredSingleLine(context, request.TitleText, request.TitleCharacterStyles,
-                request.TitleRect, Brushes.White, request.HighlightOverrides, request.TitleOverrides);
+                request.TitleRect, request.Foreground, request.HighlightOverrides, request.TitleOverrides);
 
             _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, request.DescriptionCharacterStyles,
-                request.DescriptionRect, request.DescriptionLineSpacing, Brushes.White, request.HighlightOverrides, request.DescriptionOverrides);
+                request.DescriptionRect, request.DescriptionLineSpacing, request.Foreground, request.HighlightOverrides, request.DescriptionOverrides);
         }
 
         var bitmap = new RenderTargetBitmap(
