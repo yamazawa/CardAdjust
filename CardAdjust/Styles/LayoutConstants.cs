@@ -21,6 +21,10 @@ public static class LayoutConstants
     public const double RegionResizeHandleOverhang = 5;
     public const double RegionLabelFontSize = 36;
 
+    // Grid.ColumnDefinition.Width/RowDefinition.HeightはGridLength型のため、
+    // double定数(RegionResizeHandleSize)とは別にGridLength版を用意する。
+    public static readonly GridLength RegionResizeHandleGridLength = new(RegionResizeHandleSize);
+
     public static readonly Thickness RootMargin = new(12);
     public static readonly Thickness SectionSpacing = new(4);
     public static readonly Thickness FieldSpacing = new(0, 0, 0, 4);

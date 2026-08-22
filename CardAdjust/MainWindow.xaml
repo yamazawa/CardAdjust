@@ -71,14 +71,14 @@
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
@@ -113,14 +113,14 @@
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
@@ -154,14 +154,14 @@
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
@@ -216,14 +216,14 @@
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Title}" IsHitTestVisible="False"
@@ -257,14 +257,14 @@
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Illustration}" IsHitTestVisible="False"
@@ -298,14 +298,14 @@
                                 behaviors:DragMoveBehavior.IsEnabled="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <ColumnDefinition Width="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                     <RowDefinition Height="*" />
-                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleSize}" />
+                                    <RowDefinition Height="{x:Static styles:LayoutConstants.RegionResizeHandleGridLength}" />
                                 </Grid.RowDefinitions>
 
                                 <TextBlock Grid.RowSpan="3" Grid.ColumnSpan="3" Text="{x:Static resx:Strings.Label_Description}" IsHitTestVisible="False"
