@@ -336,6 +336,58 @@
                                            behaviors:ResizeHandleBehavior.Direction="BottomRight" />
                             </Grid>
                         </Border>
+
+                        <!-- 個別設定の番号付き矩形。クリックすると調整ダイアログを開く。矩形表示より手前(後に描画)に重ねる。 -->
+                        <ItemsControl ItemsSource="{Binding TitleAnnotations}"
+                                      Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding Bounds.X}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding Bounds.Y}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Number}" Width="{Binding Bounds.Width}" Height="{Binding Bounds.Height}"
+                                            MinWidth="0" MinHeight="0" Padding="0"
+                                            FontSize="{x:Static styles:LayoutConstants.AnnotationNumberFontSize}" FontWeight="Bold"
+                                            Foreground="Yellow" Background="Transparent" BorderBrush="Yellow" BorderThickness="1.5"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.AdjustTitleOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Override}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                        <ItemsControl ItemsSource="{Binding DescriptionAnnotations}"
+                                      Visibility="{Binding ShowGuide, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <Canvas />
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemContainerStyle>
+                                <Style TargetType="ContentPresenter">
+                                    <Setter Property="Canvas.Left" Value="{Binding Bounds.X}" />
+                                    <Setter Property="Canvas.Top" Value="{Binding Bounds.Y}" />
+                                </Style>
+                            </ItemsControl.ItemContainerStyle>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Button Content="{Binding Number}" Width="{Binding Bounds.Width}" Height="{Binding Bounds.Height}"
+                                            MinWidth="0" MinHeight="0" Padding="0"
+                                            FontSize="{x:Static styles:LayoutConstants.AnnotationNumberFontSize}" FontWeight="Bold"
+                                            Foreground="Yellow" Background="Transparent" BorderBrush="Yellow" BorderThickness="1.5"
+                                            Cursor="Hand"
+                                            Command="{Binding DataContext.AdjustDescriptionOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding Override}" />
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
                     </Canvas>
                 </Grid>
             </Viewbox>
@@ -369,7 +421,7 @@
                                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
                                 <Button Content="{x:Static resx:Strings.Button_Adjust}"
                                         Command="{Binding DataContext.AdjustTitleOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
+                                        CommandParameter="{Binding Override}" />
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
@@ -424,7 +476,7 @@
                                            Margin="{x:Static styles:LayoutConstants.ButtonSpacing}" />
                                 <Button Content="{x:Static resx:Strings.Button_Adjust}"
                                         Command="{Binding DataContext.AdjustDescriptionOverrideCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
+                                        CommandParameter="{Binding Override}" />
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

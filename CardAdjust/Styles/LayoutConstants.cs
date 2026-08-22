@@ -20,6 +20,7 @@ public static class LayoutConstants
     public const double RegionResizeHandleSize = 28;
     public const double RegionResizeHandleOverhang = 5;
     public const double RegionLabelFontSize = 36;
+    public const double AnnotationNumberFontSize = 42;
 
     // Grid.ColumnDefinition.Width/RowDefinition.HeightはGridLength型のため、
     // double定数(RegionResizeHandleSize)とは別にGridLength版を用意する。

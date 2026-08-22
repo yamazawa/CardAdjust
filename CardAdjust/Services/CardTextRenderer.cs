@@ -16,23 +16,20 @@ public class CardTextRenderer
     // 説明文のある行がこの文字列そのものである場合、その行は水平線として描画する。
     private const string DividerLineText = "---";
 
-    // 個別調整の番号付き矩形(プレビュー専用)に使う色・サイズ。文字自体の色は変えない。
-    private static readonly Brush OverrideHighlightBrush = Brushes.Yellow;
+    // 個別設定の矩形(プレビュー専用、MainWindow側でクリック可能な要素として重ねて表示する)の余白。
     private const double AnnotationPadding = 2.0;
-    private const double AnnotationNumberFontSize = 42.0;
 
     /// <summary>
     /// 1行のテキストを、指定した矩形内に水平・垂直共に中央揃えで描画する
     ///
     /// stylesはtextと同じ長さ(1文字につき1要素)で渡す。
-    /// highlightOverridesがtrueの場合、overridesの区間ごとに番号付きの矩形を重ねて描画する
-    /// (文字自体の色はforegroundのまま変えない)。
+    /// overridesが実際に描画された範囲の外接矩形を返す(プレビュー画面での番号付き矩形表示に使う)。
     /// </summary>
-    public void DrawCenteredSingleLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
-        Brush foreground, bool highlightOverrides, IReadOnlyList<CharacterStyleOverride> overrides)
+    public IReadOnlyList<OverrideBounds> DrawCenteredSingleLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles,
+        Rect rect, Brush foreground, IReadOnlyList<CharacterStyleOverride> overrides)
     {
         if (text.Length == 0)
-            return;
+            return [];
 
         var glyphs = text.Select((c, i) => CreateFormattedText(c.ToString(), TypefaceFor(styles[i]), styles[i].FontSize, foreground)).ToList();
         var spacingTotal = Enumerable.Range(0, glyphs.Count - 1).Sum(i => styles[i].LetterSpacing);
@@ -52,8 +49,7 @@ public class CardTextRenderer
             x += glyphs[i].Width + styles[i].LetterSpacing;
         }
 
-        if (highlightOverrides)
-            DrawOverrideAnnotations(context, overrides, charBounds);
+        return ComputeOverrideBounds(overrides, charBounds);
     }
 
     /// <summary>
@@ -63,15 +59,14 @@ public class CardTextRenderer
     /// (改行文字の位置にも要素は必要だが、その値は描画に使われない)。
     /// ある行が「---」そのものである場合、その行はテキストではなく水平線として描画する
     /// (太さ・上下MarginはdefaultDividerStyle、または一致するdividerOverridesの値を使う)。
-    /// highlightOverridesがtrueの場合、overridesの区間ごとに番号付きの矩形を重ねて描画する
-    /// (文字自体の色はforegroundのまま変えない)。
+    /// overridesが実際に描画された範囲の外接矩形を返す(プレビュー画面での番号付き矩形表示に使う)。
     /// </summary>
-    public void DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
-        double lineSpacing, Brush foreground, bool highlightOverrides, IReadOnlyList<CharacterStyleOverride> overrides,
+    public IReadOnlyList<OverrideBounds> DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles,
+        Rect rect, double lineSpacing, Brush foreground, IReadOnlyList<CharacterStyleOverride> overrides,
         DividerStyle defaultDividerStyle, IReadOnlyList<DividerStyleOverride> dividerOverrides)
     {
         if (text.Length == 0)
-            return;
+            return [];
 
         var lines = SplitIntoLines(text, styles);
         var dividers = lines
@@ -94,8 +89,7 @@ public class CardTextRenderer
             y += lineHeights[i] + lineSpacing;
         }
 
-        if (highlightOverrides)
-            DrawOverrideAnnotations(context, overrides, charBounds);
+        return ComputeOverrideBounds(overrides, charBounds);
     }
 
     // 水平線の行は太さ+上下Marginを行の高さとして扱い、それ以外の行は文字の高さの最大値を使う。
@@ -107,7 +101,7 @@ public class CardTextRenderer
             .ToList();
 
     // フォントサイズが文字ごとに異なっても下端が揃うよう、行の下端(lineTop + lineHeight)を基準に配置する。
-    // 描画した各文字の矩形をcharBounds[startIndex + 行内位置]へ記録する(番号付き矩形の描画に使う)。
+    // 描画した各文字の矩形をcharBounds[startIndex + 行内位置]へ記録する(個別設定の矩形計算に使う)。
     private static void DrawLine(DrawingContext context, IReadOnlyList<CharacterStyle> lineStyles, double startX, double lineTop,
         double lineHeight, Brush foreground, Rect[] charBounds, int startIndex)
     {
@@ -133,29 +127,23 @@ public class CardTextRenderer
         return charBounds;
     }
 
-    // overridesを開始位置順に並べ、①②③...に対応する番号を振って矩形と番号を描画する。
-    // 番号は、プレビュー画面下の個別設定一覧(MainViewModelのOverrideSummary)と同じ順序で対応させる。
-    private static void DrawOverrideAnnotations(DrawingContext context, IReadOnlyList<CharacterStyleOverride> overrides, Rect[] charBounds)
+    // overrideごとに、実際に描画された文字の外接矩形を求める(番号付けはMainViewModel側で行う)。
+    private static List<OverrideBounds> ComputeOverrideBounds(IReadOnlyList<CharacterStyleOverride> overrides, Rect[] charBounds)
     {
-        var ordered = overrides.OrderBy(o => o.Start).ToList();
-        for (var i = 0; i < ordered.Count; i++)
-            DrawOverrideAnnotation(context, i + 1, ordered[i], charBounds);
-    }
+        var result = new List<OverrideBounds>();
+        foreach (var o in overrides)
+        {
+            var indices = Enumerable.Range(Math.Max(0, o.Start), Math.Max(0, Math.Min(o.Length, charBounds.Length - Math.Max(0, o.Start))));
+            var rects = indices.Select(i => charBounds[i]).Where(r => !r.IsEmpty).ToList();
+            if (rects.Count == 0)
+                continue;
 
-    private static void DrawOverrideAnnotation(DrawingContext context, int number, CharacterStyleOverride o, Rect[] charBounds)
-    {
-        var indices = Enumerable.Range(Math.Max(0, o.Start), Math.Max(0, Math.Min(o.Length, charBounds.Length - Math.Max(0, o.Start))));
-        var rects = indices.Select(i => charBounds[i]).Where(r => !r.IsEmpty).ToList();
-        if (rects.Count == 0)
-            return;
+            var bounds = rects.Aggregate(Rect.Union);
+            bounds.Inflate(AnnotationPadding, AnnotationPadding);
+            result.Add(new OverrideBounds(o, bounds));
+        }
 
-        var bounds = rects.Aggregate(Rect.Union);
-        bounds.Inflate(AnnotationPadding, AnnotationPadding);
-        context.DrawRectangle(null, new Pen(OverrideHighlightBrush, 1.5), bounds);
-
-        var numberTypeface = new Typeface(new FontFamily("Yu Gothic UI"), FontStyles.Normal, FontWeights.Bold, FontStretches.Normal);
-        var numberText = CreateFormattedText(number.ToString(), numberTypeface, AnnotationNumberFontSize, OverrideHighlightBrush);
-        context.DrawText(numberText, new Point(bounds.X, bounds.Y - numberText.Height));
+        return result;
     }
 
     private static List<(string RawText, List<CharacterStyle> Styles, int StartIndex)> SplitIntoLines(string text, IReadOnlyList<CharacterStyle> styles)
