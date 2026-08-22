@@ -25,6 +25,7 @@ public partial class MainViewModel : ObservableObject
     private readonly SaveFileDialogService _saveFileDialogService;
     private readonly ImageSaveService _imageSaveService;
     private readonly CardBatchExportService _batchExportService;
+    private readonly DividerAdjustDialogService _dividerAdjustDialogService;
     private readonly BitmapImage _frameTemplate;
     private bool _settingsDirty;
     private bool _layoutDirty;
@@ -42,6 +43,9 @@ public partial class MainViewModel : ObservableObject
     // ②タイトル・④説明文の統一レイアウト設定＋文字区間ごとの個別上書き。互いに別に保持する。
     private readonly TextElementState _titleState;
     private readonly TextElementState _descriptionState;
+
+    // ④説明文中の水平線(「---」の行)ごとの、太さ・上下Marginの個別上書き。
+    private readonly List<DividerStyleOverride> _descriptionDividerOverrides = [];
 
     [ObservableProperty]
     private IReadOnlyList<CardImage> _cardList;
@@ -214,7 +218,8 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(CardFolderService cardFolderService, CardCompositionService compositionService,
         OcrService ocrService, AdjustDialogService adjustDialogService, SaveFileDialogService saveFileDialogService,
         ImageSaveService imageSaveService, AppSettingsService settingsService, CardLayoutService layoutService,
-        CardBatchExportService batchExportService, AppSettings settings, string cardFolder)
+        CardBatchExportService batchExportService, DividerAdjustDialogService dividerAdjustDialogService,
+        AppSettings settings, string cardFolder)
     {
         _settingsService = settingsService;
         _layoutService = layoutService;
@@ -224,6 +229,7 @@ public partial class MainViewModel : ObservableObject
         _saveFileDialogService = saveFileDialogService;
         _imageSaveService = imageSaveService;
         _batchExportService = batchExportService;
+        _dividerAdjustDialogService = dividerAdjustDialogService;
 
         _titleState = new TextElementState
         {
@@ -331,11 +337,68 @@ public partial class MainViewModel : ObservableObject
     /// <summary>
     /// 説明文の個別調整ダイアログを開く(行間隔も対象に含める)
     ///
+    /// 選択範囲が水平線(「---」のみの行)の場合は、水平線専用の個別調整ダイアログを開く。
     /// 範囲選択が無い場合は、④説明文の共通設定を編集する。
     /// </summary>
     [RelayCommand]
-    private void AdjustDescription() =>
-        OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+    private void AdjustDescription()
+    {
+        if (FindDividerLineRange(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength) is { } range)
+            OpenDividerAdjustDialog(range.Start, range.Length);
+        else
+            OpenAdjustDialog(DescriptionText, DescriptionSelectionStart, DescriptionSelectionLength, _descriptionState, showLineSpacing: true);
+    }
+
+    // 選択範囲を含む行が「---」そのものである場合、その行全体(Start・Length)を返す。
+    private static (int Start, int Length)? FindDividerLineRange(string text, int selectionStart, int selectionLength)
+    {
+        if (selectionLength <= 0)
+            return null;
+
+        var searchFrom = Math.Clamp(selectionStart, 0, text.Length);
+        var lineStart = text.LastIndexOf('\n', Math.Max(0, searchFrom - 1)) + 1;
+        var nextNewline = text.IndexOf('\n', searchFrom);
+        var lineEnd = nextNewline < 0 ? text.Length : nextNewline;
+        var lineText = text[lineStart..lineEnd];
+
+        return lineText == "---" ? (lineStart, lineEnd - lineStart) : null;
+    }
+
+    // 水平線の太さ・上下Marginを個別に編集する。既存の上書きがあればその値を初期表示する。
+    private void OpenDividerAdjustDialog(int start, int length)
+    {
+        var existing = _descriptionDividerOverrides.FirstOrDefault(o => o.Start == start && o.Length == length);
+        var baseline = existing is null
+            ? DividerStyle.Default
+            : new DividerStyle(existing.Thickness, existing.MarginTop, existing.MarginBottom);
+
+        var viewModel = new DividerAdjustDialogViewModel(baseline.Thickness, baseline.MarginTop, baseline.MarginBottom, existing is not null);
+
+        viewModel.LiveChanged += () => ApplyDividerAdjustLive(start, length, viewModel);
+        viewModel.ClearRequested += () => _descriptionDividerOverrides.RemoveAll(o => o.Start == start && o.Length == length);
+
+        _dividerAdjustDialogService.ShowModal(viewModel);
+
+        if (viewModel.WasCanceled)
+            RevertDividerAdjust(start, length, existing);
+
+        MarkLayoutDirty();
+        RecomposePreview();
+    }
+
+    private void ApplyDividerAdjustLive(int start, int length, DividerAdjustDialogViewModel viewModel)
+    {
+        _descriptionDividerOverrides.RemoveAll(o => o.Start == start && o.Length == length);
+        _descriptionDividerOverrides.Add(new DividerStyleOverride(start, length, viewModel.Thickness, viewModel.MarginTop, viewModel.MarginBottom));
+        RecomposePreview();
+    }
+
+    private void RevertDividerAdjust(int start, int length, DividerStyleOverride? original)
+    {
+        _descriptionDividerOverrides.RemoveAll(o => o.Start == start && o.Length == length);
+        if (original is not null)
+            _descriptionDividerOverrides.Add(original);
+    }
 
     /// <summary>
     /// 個別設定一覧の番号から、対象のOverridesを直接編集する
@@ -573,6 +636,8 @@ public partial class MainViewModel : ObservableObject
         _titleState.Overrides.AddRange(layout?.TitleOverrides ?? []);
         _descriptionState.Overrides.Clear();
         _descriptionState.Overrides.AddRange(layout?.DescriptionOverrides ?? []);
+        _descriptionDividerOverrides.Clear();
+        _descriptionDividerOverrides.AddRange(layout?.DescriptionDividerOverrides ?? []);
     }
 
     partial void OnTitleTextChanged(string value)
@@ -842,7 +907,7 @@ public partial class MainViewModel : ObservableObject
         IsIllustrationDestRegionIndividual ? new RegionOverride(IllustrationDestX, IllustrationDestY, IllustrationDestWidth, IllustrationDestHeight) : null,
         IsDescriptionDestRegionIndividual ? new RegionOverride(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight) : null,
         TitleText, DescriptionText, KeepIllustrationAspectRatio,
-        _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList());
+        _titleState.Overrides.ToList(), _descriptionState.Overrides.ToList(), _descriptionDividerOverrides.ToList());
 
     // プレビューではHighlightOverridesEnabledに応じて個別調整による上書きを色分け表示する。
     // 保存・一斉出力では色分け表示しない(SaveImage側でhighlightOverrides: falseで再合成する)。
@@ -874,6 +939,8 @@ public partial class MainViewModel : ObservableObject
             DescriptionOverrides = _descriptionState.Overrides,
             DescriptionLineSpacing = _descriptionState.LineSpacing,
             DescriptionRect = new Rect(DescriptionDestX, DescriptionDestY, DescriptionDestWidth, DescriptionDestHeight),
+            DefaultDividerStyle = DividerStyle.Default,
+            DividerOverrides = _descriptionDividerOverrides,
             HighlightOverrides = highlightOverrides,
         };
     }

@@ -19,4 +19,5 @@ public sealed record CardLayout(
     string DescriptionText,
     bool KeepIllustrationAspectRatio,
     List<CharacterStyleOverride> TitleOverrides,
-    List<CharacterStyleOverride> DescriptionOverrides);
+    List<CharacterStyleOverride> DescriptionOverrides,
+    List<DividerStyleOverride> DescriptionDividerOverrides);

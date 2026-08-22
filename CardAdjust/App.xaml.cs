@@ -39,8 +39,10 @@ public partial class App : Application
         var imageSaveService = new ImageSaveService();
         var layoutService = new CardLayoutService();
         var batchExportService = new CardBatchExportService(layoutService, compositionService, imageSaveService);
+        var dividerAdjustDialogService = new DividerAdjustDialogService();
         _viewModel = new MainViewModel(cardFolderService, compositionService, ocrService, adjustDialogService,
-            saveFileDialogService, imageSaveService, _settingsService, layoutService, batchExportService, appSettings, cardFolder);
+            saveFileDialogService, imageSaveService, _settingsService, layoutService, batchExportService,
+            dividerAdjustDialogService, appSettings, cardFolder);
 
         _autoSaveTimer = new DispatcherTimer { Interval = AutoSaveInterval };
         _autoSaveTimer.Tick += (_, _) =>

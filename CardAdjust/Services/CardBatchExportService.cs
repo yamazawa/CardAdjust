@@ -65,6 +65,7 @@ public class CardBatchExportService
                 descriptionStyle.FontSize, descriptionStyle.LetterSpacing, descriptionStyle.IsBold, layout?.DescriptionOverrides ?? []),
             DescriptionLineSpacing = descriptionLineSpacing,
             DescriptionRect = ResolveRect(layout?.DescriptionDestRegion, CardTemplateLayout.DescriptionRect),
+            DividerOverrides = layout?.DescriptionDividerOverrides ?? [],
         };
     }
 

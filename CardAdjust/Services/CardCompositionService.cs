@@ -42,7 +42,8 @@ public class CardCompositionService
                 request.TitleRect, Brushes.White, request.HighlightOverrides, request.TitleOverrides);
 
             _textRenderer.DrawLeftAlignedMultiLine(context, request.DescriptionText, request.DescriptionCharacterStyles,
-                request.DescriptionRect, request.DescriptionLineSpacing, Brushes.White, request.HighlightOverrides, request.DescriptionOverrides);
+                request.DescriptionRect, request.DescriptionLineSpacing, Brushes.White, request.HighlightOverrides, request.DescriptionOverrides,
+                request.DefaultDividerStyle, request.DividerOverrides);
         }
 
         var bitmap = new RenderTargetBitmap(

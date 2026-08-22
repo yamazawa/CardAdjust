@@ -15,7 +15,6 @@ public class CardTextRenderer
 {
     // 説明文のある行がこの文字列そのものである場合、その行は水平線として描画する。
     private const string DividerLineText = "---";
-    private const double DividerThickness = 3.0;
 
     // 個別調整の番号付き矩形(プレビュー専用)に使う色・サイズ。文字自体の色は変えない。
     private static readonly Brush OverrideHighlightBrush = Brushes.Yellow;
@@ -62,28 +61,33 @@ public class CardTextRenderer
     ///
     /// 改行(\n)は描画せず、行の区切りとしてのみ扱う。stylesはtextと同じ長さで渡す
     /// (改行文字の位置にも要素は必要だが、その値は描画に使われない)。
-    /// ある行が「---」そのものである場合、その行はテキストではなく水平線として描画する。
+    /// ある行が「---」そのものである場合、その行はテキストではなく水平線として描画する
+    /// (太さ・上下MarginはdefaultDividerStyle、または一致するdividerOverridesの値を使う)。
     /// highlightOverridesがtrueの場合、overridesの区間ごとに番号付きの矩形を重ねて描画する
     /// (文字自体の色はforegroundのまま変えない)。
     /// </summary>
     public void DrawLeftAlignedMultiLine(DrawingContext context, string text, IReadOnlyList<CharacterStyle> styles, Rect rect,
-        double lineSpacing, Brush foreground, bool highlightOverrides, IReadOnlyList<CharacterStyleOverride> overrides)
+        double lineSpacing, Brush foreground, bool highlightOverrides, IReadOnlyList<CharacterStyleOverride> overrides,
+        DividerStyle defaultDividerStyle, IReadOnlyList<DividerStyleOverride> dividerOverrides)
     {
         if (text.Length == 0)
             return;
 
         var lines = SplitIntoLines(text, styles);
-        var lineHeights = lines
-            .Select(line => line.Styles.Count == 0 ? 0 : line.Styles.Max(c => CreateFormattedText(c.Character.ToString(), TypefaceFor(c), c.FontSize, foreground).Height))
+        var dividers = lines
+            .Select(line => line.RawText == DividerLineText
+                ? DividerStyleBuilder.Resolve(line.StartIndex, line.RawText.Length, defaultDividerStyle, dividerOverrides)
+                : null)
             .ToList();
+        var lineHeights = ComputeLineHeights(lines, dividers, foreground);
         var totalHeight = lineHeights.Sum() + lineSpacing * Math.Max(0, lines.Count - 1);
 
         var charBounds = NewCharBoundsArray(text.Length);
         var y = rect.Y + (rect.Height - totalHeight) / 2;
         for (var i = 0; i < lines.Count; i++)
         {
-            if (lines[i].RawText == DividerLineText)
-                DrawDivider(context, rect, y + lineHeights[i] / 2, foreground);
+            if (dividers[i] is { } divider)
+                DrawDivider(context, rect, y + divider.MarginTop + divider.Thickness / 2, divider.Thickness, foreground);
             else
                 DrawLine(context, lines[i].Styles, rect.X, y, lineHeights[i], foreground, charBounds, lines[i].StartIndex);
 
@@ -93,6 +97,14 @@ public class CardTextRenderer
         if (highlightOverrides)
             DrawOverrideAnnotations(context, overrides, charBounds);
     }
+
+    // 水平線の行は太さ+上下Marginを行の高さとして扱い、それ以外の行は文字の高さの最大値を使う。
+    private static List<double> ComputeLineHeights(List<(string RawText, List<CharacterStyle> Styles, int StartIndex)> lines,
+        List<DividerStyle?> dividers, Brush foreground) =>
+        lines.Select((line, i) => dividers[i] is { } divider
+                ? divider.Thickness + divider.MarginTop + divider.MarginBottom
+                : (line.Styles.Count == 0 ? 0 : line.Styles.Max(c => CreateFormattedText(c.Character.ToString(), TypefaceFor(c), c.FontSize, foreground).Height)))
+            .ToList();
 
     // フォントサイズが文字ごとに異なっても下端が揃うよう、行の下端(lineTop + lineHeight)を基準に配置する。
     // 描画した各文字の矩形をcharBounds[startIndex + 行内位置]へ記録する(番号付き矩形の描画に使う)。
@@ -111,8 +123,8 @@ public class CardTextRenderer
         }
     }
 
-    private static void DrawDivider(DrawingContext context, Rect rect, double y, Brush foreground) =>
-        context.DrawLine(new Pen(foreground, DividerThickness), new Point(rect.X, y), new Point(rect.X + rect.Width, y));
+    private static void DrawDivider(DrawingContext context, Rect rect, double y, double thickness, Brush foreground) =>
+        context.DrawLine(new Pen(foreground, thickness), new Point(rect.X, y), new Point(rect.X + rect.Width, y));
 
     private static Rect[] NewCharBoundsArray(int length)
     {
