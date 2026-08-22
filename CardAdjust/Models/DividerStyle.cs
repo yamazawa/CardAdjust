@@ -5,5 +5,5 @@ namespace CardAdjust.Models;
 /// </summary>
 public sealed record DividerStyle(double Thickness, double MarginTop, double MarginBottom)
 {
-    public static DividerStyle Default { get; } = new(2.0, 0, 0);
+    public static DividerStyle Default { get; } = new(2.0, 8.0, 8.0);
 }
